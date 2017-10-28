@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -29,9 +30,6 @@ public class Graph<T> {
             if (adjacencyMatrix[0].length != adjacencyMatrix.length) {
                 throw new IllegalArgumentException("Adjacency matrix is not square: " + Arrays.toString(adjacencyMatrix));
             }
-//            if (adjacencyMatrix[row][row] != 0) {
-//                throw new IllegalArgumentException("Adjacency matrix's diagonal is not zeroes");
-//            }
         }
         for (int row = 0; row < adjacencyMatrix.length; row++) {
             for (int col = 0; col < adjacencyMatrix.length; col++) {
@@ -45,10 +43,8 @@ public class Graph<T> {
                 }
             }
         }
-        for (Set<Integer> adjacency : adjacencies) {
-            adjacency.clear();
-        }
 
+        clearEdges();
         for (int row = 0; row < adjacencyMatrix.length; row++) {
             for (int col = 0; col < adjacencyMatrix.length; col++) {
                 if (adjacencyMatrix[row][col] != 0) {
@@ -58,6 +54,24 @@ public class Graph<T> {
         }
 
         return this;
+    }
+
+    private void clearEdges() {
+        for (Set<Integer> adjacency : adjacencies) {
+            adjacency.clear();
+        }
+    }
+
+    public void randomizeEdges() {
+        Random random = new Random();
+        clearEdges();
+        for (int n1 = 0; n1 < this.nodes.size(); n1++) {
+            for (int n2 = n1 + 1; n2 < this.nodes.size(); n2++) {
+                if (random.nextBoolean()) {
+                    addEdge(n1, n2);
+                }
+            }
+        }
     }
 
     public T getNode(int n) {

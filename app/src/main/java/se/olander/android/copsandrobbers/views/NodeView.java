@@ -9,9 +9,11 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import se.olander.android.copsandrobbers.models.Node;
+
 import static se.olander.android.copsandrobbers.views.ViewUtils.getMeasurement;
 
-public class NodeView extends View {
+public class NodeView extends View implements Node {
 
     private final static String TAG = "Node";
 
@@ -20,14 +22,18 @@ public class NodeView extends View {
 
 //    private GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureListener());
 
-    private Paint fillPaint;
-    private Paint fillPaintFocused;
-    private Paint strokePaint;
+    private final Paint fillPaint;
+    private final Paint fillPaintFocused;
+    private final Paint fillPaintRobber;
+    private final Paint strokePaint;
 
     private int radius;
     private int strokeWidth;
 
+    private int index;
+
     private boolean focused;
+    private boolean isRobber;
 
     public NodeView(Context context) {
         this(context, null);
@@ -51,6 +57,9 @@ public class NodeView extends View {
         fillPaintFocused = new Paint(fillPaint);
         fillPaintFocused.setColor(Color.GRAY);
 
+        fillPaintRobber = new Paint(fillPaint);
+        fillPaintRobber.setColor(0xffa03030);
+
         strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         strokePaint.setStyle(Paint.Style.STROKE);
         strokePaint.setColor(Color.BLACK);
@@ -69,6 +78,23 @@ public class NodeView extends View {
                 postInvalidate();
             }
         });
+    }
+
+    @Override
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
+    public void setRobber(boolean isRobber) {
+        if (isRobber != this.isRobber) {
+            this.isRobber = isRobber;
+            postInvalidate();
+        }
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public int getRadius() {
@@ -103,8 +129,16 @@ public class NodeView extends View {
         float r = getRadius();
         float cx = r + strokeWidth;
         float cy = r + strokeWidth;
-        canvas.drawCircle(cx, cy, r, focused ? fillPaintFocused : fillPaint);
+        canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
+    }
+
+    private Paint getFillPaint() {
+        if (isRobber) {
+            return fillPaintRobber;
+        }
+
+        return fillPaint;
     }
 
     @Override
