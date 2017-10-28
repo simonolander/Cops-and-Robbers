@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import se.olander.android.copsandrobbers.views.layout.CircleLayout;
-import se.olander.android.copsandrobbers.views.layout.GraphLayout;
+import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
+import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 
-public class Graph extends RelativeLayout {
+public class GraphLayout extends RelativeLayout {
     private static final String TAG = "Graph";
 
     private List<Node> nodes;
@@ -23,9 +23,9 @@ public class Graph extends RelativeLayout {
 
     private Paint edgePaint;
 
-    private GraphLayout graphLayout;
+    private GraphLayoutHelper graphLayoutHelper;
 
-    public Graph(Context context, @Nullable AttributeSet attrs) {
+    public GraphLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
         edgePaint = new Paint();
@@ -49,8 +49,8 @@ public class Graph extends RelativeLayout {
         }
 
         setWillNotDraw(false);
-//        this.graphLayout = new ForceSpreadLayout(nodes, adjacencies);
-        this.graphLayout = new CircleLayout(nodes, adjacencies);
+//        this.graphLayoutHelper = new ForceSpreadLayoutHelper(nodes, adjacencies);
+        this.graphLayoutHelper = new CircleLayoutHelper(nodes, adjacencies);
     }
 
     @Override
@@ -76,6 +76,6 @@ public class Graph extends RelativeLayout {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        graphLayout.layout(left, top, right, bottom);
+        graphLayoutHelper.layout(left, top, right, bottom);
     }
 }

@@ -4,13 +4,13 @@ import android.view.View;
 
 import java.util.List;
 
-public class CircleLayout extends GraphLayout {
+public class CircleLayoutHelper extends GraphLayoutHelper {
 
     private final List<? extends View> nodes;
     private final List<List<Integer>> adjacencies;
     private float radiusMultiplier = 0.8f;
 
-    public CircleLayout(List<? extends View> nodes, List<List<Integer>> adjacencies) {
+    public CircleLayoutHelper(List<? extends View> nodes, List<List<Integer>> adjacencies) {
         this.nodes = nodes;
         this.adjacencies = adjacencies;
     }

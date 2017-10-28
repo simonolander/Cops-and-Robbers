@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ForceSpreadLayout extends GraphLayout {
+public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
     private final ArrayList<PointF> points;
     private final ArrayList<PointF> tempPoints;
@@ -16,7 +16,7 @@ public class ForceSpreadLayout extends GraphLayout {
     private final List<List<Integer>> adjacencies;
     private Random random;
 
-    public ForceSpreadLayout(List<? extends View> nodes, List<List<Integer>> adjacencies) {
+    public ForceSpreadLayoutHelper(List<? extends View> nodes, List<List<Integer>> adjacencies) {
         this.random = new Random();
         this.points = new ArrayList<>(nodes.size());
         this.tempPoints = new ArrayList<>(nodes.size());
