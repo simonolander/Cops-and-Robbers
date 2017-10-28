@@ -20,11 +20,26 @@ public class CircleLayoutHelper extends GraphLayoutHelper {
         float radius = size / 2 * radiusMultiplier;
         float cx = (right + left) / 2;
         float cy = (bottom + top) / 2;
+
+        float minLeft = width, minTop = height, minRight = width, minBottom = height;
         for (int i = 0; i < getGraph().getNodes().size(); i++) {
-            View node = getGraph().getNodes().get(i);
             float angle = TAU * i / getGraph().getNodes().size();
             float x = (float) (cx + Math.cos(angle) * radius);
             float y = (float) (cy + Math.sin(angle) * radius);
+            minLeft = Math.min(minLeft, x);
+            minTop = Math.min(minTop, y);
+            minRight = Math.min(minRight, width - x);
+            minBottom = Math.min(minBottom, height - y);
+        }
+
+        float offsetX = (minRight - minLeft) / 2;
+        float offsetY = (minBottom - minTop) / 2;
+
+        for (int i = 0; i < getGraph().getNodes().size(); i++) {
+            View node = getGraph().getNodes().get(i);
+            float angle = TAU * i / getGraph().getNodes().size();
+            float x = (float) (cx + Math.cos(angle) * radius + offsetX);
+            float y = (float) (cy + Math.sin(angle) * radius + offsetY);
             centerLayout(node, x, y);
         }
     }
