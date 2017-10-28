@@ -70,6 +70,7 @@ public class NodeView extends View implements Node {
 
         setFocusable(true);
         setClickable(true);
+        setPadding(30, 30, 30, 30);
 
         setOnClickListener(new OnClickListener() {
             @Override
@@ -127,8 +128,8 @@ public class NodeView extends View implements Node {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float r = getRadius();
-        float cx = r + strokeWidth;
-        float cy = r + strokeWidth;
+        float cx = r + strokeWidth + getPaddingLeft();
+        float cy = r + strokeWidth + getPaddingTop();
         canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
     }

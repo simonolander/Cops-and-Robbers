@@ -19,16 +19,16 @@ public abstract class GraphLayoutHelper {
 
     public abstract void layout(int left, int top, int right, int bottom);
 
-    protected void centerLayout(View node, float cx, float cy) {
-        float left = cx - node.getWidth() / 2;
-        float top = cy - node.getHeight() / 2;
-        float right = cx + node.getWidth() / 2;
-        float bottom = cy + node.getHeight() / 2;
-        node.layout(
-                (int) left,
-                (int) top,
-                (int) right,
-                (int) bottom
+    protected void centerLayout(View view, float cx, float cy) {
+        float left = cx - view.getWidth() / 2;
+        float top = cy - view.getHeight() / 2;
+        float right = cx + view.getWidth() / 2;
+        float bottom = cy + view.getHeight() / 2;
+        view.layout(
+                (int) left - view.getPaddingLeft(),
+                (int) top - view.getPaddingTop(),
+                (int) right + view.getPaddingRight(),
+                (int) bottom + view.getPaddingBottom()
         );
     }
 
