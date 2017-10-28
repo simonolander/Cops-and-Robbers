@@ -8,25 +8,29 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import se.olander.android.copsandrobbers.R;
+import se.olander.android.copsandrobbers.models.Level;
+import se.olander.android.copsandrobbers.views.GraphLayout;
 
 
 public class LevelFragment extends Fragment {
 
-    public static final String LEVEL_RES_ID_KEY = "level";
+    public static final String LEVEL_KEY = "level";
 
-    private int levelResId;
+    private Level level;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        levelResId = getArguments().getInt(LEVEL_RES_ID_KEY);
+        level = (Level) getArguments().getSerializable(LEVEL_KEY);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        View view = inflater.inflate(levelResId, container, false);
+        View view = inflater.inflate(R.layout.fragment_level, container, false);
+        GraphLayout graphView = view.findViewById(R.id.graph);
+        graphView.setLevel(level);
         return view;
     }
 }

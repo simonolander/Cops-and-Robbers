@@ -14,7 +14,11 @@ public abstract class GraphLayoutHelper {
     }
 
     public Graph<? extends View> getGraph() {
-        return this.graph;
+        return graph;
+    }
+
+    public void setGraph(Graph<? extends View> graph) {
+        this.graph = graph;
     }
 
     public abstract void layout(int left, int top, int right, int bottom);

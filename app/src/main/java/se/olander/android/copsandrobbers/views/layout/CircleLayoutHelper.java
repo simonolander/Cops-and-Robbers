@@ -2,8 +2,6 @@ package se.olander.android.copsandrobbers.views.layout;
 
 import android.view.View;
 
-import java.util.List;
-
 import se.olander.android.copsandrobbers.models.Graph;
 
 public class CircleLayoutHelper extends GraphLayoutHelper {

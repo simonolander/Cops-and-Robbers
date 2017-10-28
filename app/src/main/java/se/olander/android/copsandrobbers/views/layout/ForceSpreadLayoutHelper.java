@@ -11,13 +11,18 @@ import se.olander.android.copsandrobbers.models.Graph;
 
 public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
-    private final ArrayList<PointF> points;
-    private final ArrayList<PointF> tempPoints;
+    private ArrayList<PointF> points;
+    private ArrayList<PointF> tempPoints;
     private Random random;
 
     public ForceSpreadLayoutHelper(Graph<? extends View> graph) {
         super(graph);
         this.random = new Random();
+    }
+
+    @Override
+    public void setGraph(Graph<? extends View> graph) {
+        super.setGraph(graph);
         this.points = new ArrayList<>(graph.getNodes().size());
         this.tempPoints = new ArrayList<>(this.points.size());
         for (int i = 0; i < this.points.size(); i++) {

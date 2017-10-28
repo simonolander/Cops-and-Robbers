@@ -9,11 +9,12 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import se.olander.android.copsandrobbers.models.Edge;
 import se.olander.android.copsandrobbers.models.Graph;
+import se.olander.android.copsandrobbers.models.Level;
 import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
@@ -28,6 +29,7 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
     private GraphLayoutHelper graphLayoutHelper;
 
     private int currentRobberNodeIndex;
+    private Level level;
 
     public GraphLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -36,42 +38,10 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
         edgePaint.setColor(Color.BLACK);
         edgePaint.setStrokeWidth(10);
 
-        List<NodeView> nodes = Arrays.asList(
-                new NodeView(context),
-                new NodeView(context),
-                new NodeView(context),
-                new NodeView(context),
-                new NodeView(context),
-                new NodeView(context),
-                new NodeView(context)
-        );
 
-        for (int i = 0; i < nodes.size(); i++) {
-            NodeView node = nodes.get(i);
-            node.setOnClickListener(this);
-            node.setIndex(i);
-            node.setRobber(this.currentRobberNodeIndex == i);
-        }
-
-        this.graph = new Graph<>(nodes);
-        this.graph.setAdjacencyMatrix(new int[][] {
-                new int[] {0, 0, 1, 0, 1, 0, 0},
-                new int[] {0, 0, 0, 1, 0, 1, 0},
-                new int[] {1, 0, 0, 0, 1, 0, 0},
-                new int[] {0, 1, 0, 0, 0, 1, 1},
-                new int[] {1, 0, 1, 0, 0, 0, 0},
-                new int[] {0, 1, 0, 1, 0, 0, 0},
-                new int[] {0, 0, 0, 1, 0, 0, 0}
-        });
-        this.graph.randomizeEdges();
-
-        for (NodeView nodeView : graph.getNodes()) {
-            addView(nodeView);
-        }
 
         setWillNotDraw(false);
-//        this.graphLayoutHelper = new ForceSpreadLayoutHelper(nodes, adjacencies);
-        this.graphLayoutHelper = new CircleLayoutHelper(graph);
+        graphLayoutHelper = new CircleLayoutHelper(null);
     }
 
     @Override
@@ -120,5 +90,29 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
         currentRobberNode.setRobber(false);
         node.setRobber(true);
         currentRobberNodeIndex = nodeIndex;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
+        List<NodeView> nodes = new ArrayList<>();
+        for (int i = 0; i < level.getNumberOfNodes(); i++) {
+            NodeView nodeView = new NodeView(getContext());
+            nodeView.setOnClickListener(this);
+            nodeView.setIndex(i);
+            nodeView.setRobber(this.currentRobberNodeIndex == i);
+            addView(nodeView);
+            nodes.add(nodeView);
+        }
+
+        graph = new Graph<>(nodes);
+        for (int n1 = 0; n1 < level.getEdges().size(); n1++) {
+            for (Integer n2 : level.getEdges().get(n1)) {
+                graph.addEdge(n1, n2);
+            }
+        }
+
+        graphLayoutHelper.setGraph(graph);
+
+        postInvalidate();
     }
 }
