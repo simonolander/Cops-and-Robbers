@@ -5,27 +5,25 @@ import android.support.v4.math.MathUtils;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+
+import se.olander.android.copsandrobbers.models.Graph;
 
 public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
     private final ArrayList<PointF> points;
     private final ArrayList<PointF> tempPoints;
-    private final List<? extends View> nodes;
-    private final List<List<Integer>> adjacencies;
     private Random random;
 
-    public ForceSpreadLayoutHelper(List<? extends View> nodes, List<List<Integer>> adjacencies) {
+    public ForceSpreadLayoutHelper(Graph<? extends View> graph) {
+        super(graph);
         this.random = new Random();
-        this.points = new ArrayList<>(nodes.size());
-        this.tempPoints = new ArrayList<>(nodes.size());
-        for (int i = 0; i < nodes.size(); i++) {
+        this.points = new ArrayList<>(graph.getNodes().size());
+        this.tempPoints = new ArrayList<>(this.points.size());
+        for (int i = 0; i < this.points.size(); i++) {
             points.add(new PointF());
             tempPoints.add(new PointF());
         }
-        this.nodes = nodes;
-        this.adjacencies = adjacencies;
     }
 
     private void iterate(float left, float top, float right, float bottom) {
@@ -41,7 +39,7 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
                 }
 
                 PointF p2 = points.get(i2);
-                boolean adjacent = adjacencies.get(i1).contains(i2);
+                boolean adjacent = getGraph().areNeighbours(i1, i2);
                 float f = adjacent ? force/2 : force;
                 float distanceX = p1.x - p2.x;
                 float distanceY = p1.y - p2.y;
@@ -69,7 +67,7 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
         }
     }
 
-    private void reset(int left, int right, int top, int bottom) {
+    private void reset(int left, int top, int right, int bottom) {
         for (PointF point : points) {
             float cx = (right - left) / 2;
             float cy = (bottom - top) / 2;
@@ -85,8 +83,8 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
             iterate(left, top, right, bottom);
         }
 
-        for (int i = 0; i < nodes.size(); i++) {
-            View node = nodes.get(i);
+        for (int i = 0; i < getGraph().getNodes().size(); i++) {
+            View node = getGraph().getNode(i);
             PointF p = points.get(i);
             centerLayout(node, p);
         }

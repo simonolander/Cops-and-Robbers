@@ -12,14 +12,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import se.olander.android.copsandrobbers.models.Edge;
+import se.olander.android.copsandrobbers.models.Graph;
 import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 
 public class GraphLayout extends RelativeLayout {
-    private static final String TAG = "Graph";
+    private static final String TAG = GraphLayout.class.getSimpleName();
 
-    private List<Node> nodes;
-    private List<List<Integer>> adjacencies;
+    private Graph<NodeView> graph;
 
     private Paint edgePaint;
 
@@ -32,44 +33,43 @@ public class GraphLayout extends RelativeLayout {
         edgePaint.setColor(Color.BLACK);
         edgePaint.setStrokeWidth(10);
 
-        nodes = new ArrayList<>();
-        adjacencies = Arrays.asList(
-                Arrays.asList(1, 2, 3),
-                Arrays.asList(0),
-                Arrays.asList(0),
-                Arrays.asList(0)
-        );
+        this.graph = new Graph<>(Arrays.asList(
+            new NodeView(context),
+            new NodeView(context),
+            new NodeView(context),
+            new NodeView(context),
+            new NodeView(context),
+            new NodeView(context)
+        ));
+        this.graph.setAdjacencyMatrix(new int[][] {
+                new int[] {0, 1, 1, 1, 1, 1},
+                new int[] {1, 0, 1, 1, 1, 1},
+                new int[] {1, 1, 0, 1, 1, 1},
+                new int[] {1, 1, 1, 0, 1, 1},
+                new int[] {1, 1, 1, 1, 0, 1},
+                new int[] {1, 1, 1, 1, 1, 0}
+        });
 
-        for (int i = 0; i < adjacencies.size(); i++) {
-            nodes.add(new Node(context));
-        }
-
-        for (Node node : nodes) {
-            addView(node);
+        for (NodeView nodeView : graph.getNodes()) {
+            addView(nodeView);
         }
 
         setWillNotDraw(false);
 //        this.graphLayoutHelper = new ForceSpreadLayoutHelper(nodes, adjacencies);
-        this.graphLayoutHelper = new CircleLayoutHelper(nodes, adjacencies);
+        this.graphLayoutHelper = new CircleLayoutHelper(graph);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        for (int i1 = 0; i1 < adjacencies.size(); i1++) {
-            Node n1 = nodes.get(i1);
-            List<Integer> adjacency = adjacencies.get(i1);
-            for (int i2 = 0; i2 < adjacency.size(); i2++) {
-                if (i2 >= i1) {
-                    continue;
-                }
-                Node n2 = nodes.get(i2);
-                float cx1 = n1.getX() + n1.getWidth() / 2f;
-                float cy1 = n1.getY() + n1.getHeight() / 2f;
-                float cx2 = n2.getX() + n2.getWidth() / 2f;
-                float cy2 = n2.getY() + n2.getHeight() / 2f;
-                canvas.drawLine(cx1, cy1, cx2, cy2, edgePaint);
-            }
+        for (Edge edge : graph.getAllEdges()) {
+            NodeView n1 = graph.getNode(edge.getN1());
+            NodeView n2 = graph.getNode(edge.getN2());
+            float cx1 = n1.getX() + n1.getWidth() / 2f;
+            float cy1 = n1.getY() + n1.getHeight() / 2f;
+            float cx2 = n2.getX() + n2.getWidth() / 2f;
+            float cy2 = n2.getY() + n2.getHeight() / 2f;
+            canvas.drawLine(cx1, cy1, cx2, cy2, edgePaint);
         }
     }
 

@@ -4,15 +4,14 @@ import android.view.View;
 
 import java.util.List;
 
+import se.olander.android.copsandrobbers.models.Graph;
+
 public class CircleLayoutHelper extends GraphLayoutHelper {
 
-    private final List<? extends View> nodes;
-    private final List<List<Integer>> adjacencies;
     private float radiusMultiplier = 0.8f;
 
-    public CircleLayoutHelper(List<? extends View> nodes, List<List<Integer>> adjacencies) {
-        this.nodes = nodes;
-        this.adjacencies = adjacencies;
+    public CircleLayoutHelper(Graph<? extends View> graph) {
+        super(graph);
     }
 
     @Override
@@ -23,9 +22,9 @@ public class CircleLayoutHelper extends GraphLayoutHelper {
         float radius = size / 2 * radiusMultiplier;
         float cx = (right + left) / 2;
         float cy = (bottom + top) / 2;
-        for (int i = 0; i < nodes.size(); i++) {
-            View node = nodes.get(i);
-            float angle = TAU * i / nodes.size();
+        for (int i = 0; i < getGraph().getNodes().size(); i++) {
+            View node = getGraph().getNodes().get(i);
+            float angle = TAU * i / getGraph().getNodes().size();
             float x = (float) (cx + Math.cos(angle) * radius);
             float y = (float) (cy + Math.sin(angle) * radius);
             centerLayout(node, x, y);

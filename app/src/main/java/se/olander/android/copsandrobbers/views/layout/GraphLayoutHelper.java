@@ -3,8 +3,19 @@ package se.olander.android.copsandrobbers.views.layout;
 import android.graphics.PointF;
 import android.view.View;
 
+import se.olander.android.copsandrobbers.models.Graph;
+
 public abstract class GraphLayoutHelper {
     float TAU = (float) (Math.PI * 2);
+    private Graph<? extends View> graph;
+
+    public GraphLayoutHelper(Graph<? extends View> graph) {
+        this.graph = graph;
+    }
+
+    public Graph<? extends View> getGraph() {
+        return this.graph;
+    }
 
     public abstract void layout(int left, int top, int right, int bottom);
 
