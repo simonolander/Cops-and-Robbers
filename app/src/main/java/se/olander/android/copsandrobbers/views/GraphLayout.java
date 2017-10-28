@@ -37,11 +37,10 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
         edgePaint = new Paint();
         edgePaint.setColor(Color.BLACK);
         edgePaint.setStrokeWidth(10);
-
-
+        edgePaint.setAntiAlias(true);
 
         setWillNotDraw(false);
-        graphLayoutHelper = new CircleLayoutHelper(null);
+        graphLayoutHelper = new CircleLayoutHelper(new Graph<View>());
     }
 
     @Override

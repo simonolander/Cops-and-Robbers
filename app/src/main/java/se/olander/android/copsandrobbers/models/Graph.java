@@ -14,6 +14,10 @@ public class Graph<T> {
     private final List<T> nodes;
     private final List<Set<Integer>> adjacencies;
 
+    public Graph() {
+        this(new ArrayList<T>());
+    }
+
     public Graph(List<T> nodes) {
         this.nodes = new ArrayList<>(nodes);
         this.adjacencies = new ArrayList<>(this.nodes.size());

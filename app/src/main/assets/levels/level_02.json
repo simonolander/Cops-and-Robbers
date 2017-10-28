@@ -1,0 +1,9 @@
+{
+  "title": "Level 2",
+  "numberOfNodes": 3,
+  "edges": [
+    [1],
+    [0, 2],
+    [1]
+  ]
+}
