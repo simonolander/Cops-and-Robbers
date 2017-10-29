@@ -13,9 +13,9 @@ import se.olander.android.copsandrobbers.models.Node;
 
 import static se.olander.android.copsandrobbers.views.ViewUtils.getMeasurement;
 
-public class NodeView extends View implements Node {
+public class NodeView extends View {
 
-    private final static String TAG = "Node";
+    private static final String TAG = NodeView.class.getSimpleName();
 
     private final static int RADIUS = 50;
     private final static int STROKE_WIDTH = 5;
@@ -27,13 +27,12 @@ public class NodeView extends View implements Node {
     private final Paint fillPaintRobber;
     private final Paint strokePaint;
 
+    private Node node;
+
     private int radius;
     private int strokeWidth;
 
-    private int index;
-
     private boolean focused;
-    private boolean isRobber;
 
     public NodeView(Context context) {
         this(context, null);
@@ -81,23 +80,6 @@ public class NodeView extends View implements Node {
         });
     }
 
-    @Override
-    public int getIndex() {
-        return index;
-    }
-
-    @Override
-    public void setRobber(boolean isRobber) {
-        if (isRobber != this.isRobber) {
-            this.isRobber = isRobber;
-            postInvalidate();
-        }
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public int getRadius() {
         return radius;
     }
@@ -135,7 +117,7 @@ public class NodeView extends View implements Node {
     }
 
     private Paint getFillPaint() {
-        if (isRobber) {
+        if (node.isRobber()) {
             return fillPaintRobber;
         }
 
@@ -147,5 +129,13 @@ public class NodeView extends View implements Node {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
         focused = gainFocus;
         postInvalidate();
+    }
+
+    public void setNode(Node node) {
+        this.node = node;
+    }
+
+    public Node getNode() {
+        return node;
     }
 }

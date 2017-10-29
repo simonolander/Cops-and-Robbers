@@ -3,22 +3,35 @@ package se.olander.android.copsandrobbers.views.layout;
 import android.graphics.PointF;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import se.olander.android.copsandrobbers.models.Graph;
 
 public abstract class GraphLayoutHelper {
     float TAU = (float) (Math.PI * 2);
-    private Graph<? extends View> graph;
+    private Graph graph;
+    private List<? extends View> nodes;
 
-    public GraphLayoutHelper(Graph<? extends View> graph) {
-        this.graph = graph;
+    public GraphLayoutHelper() {
+        graph = new Graph();
+        nodes = new ArrayList<>();
     }
 
-    public Graph<? extends View> getGraph() {
+    public Graph getGraph() {
         return graph;
     }
 
-    public void setGraph(Graph<? extends View> graph) {
+    public void setGraph(Graph graph) {
         this.graph = graph;
+    }
+
+    public List<? extends View> getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(List<? extends View> nodes) {
+        this.nodes = nodes;
     }
 
     public abstract void layout(int left, int top, int right, int bottom);

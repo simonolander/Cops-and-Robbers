@@ -4,31 +4,68 @@ package se.olander.android.copsandrobbers.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class Graph<T> {
+public class Graph {
 
-    private final List<T> nodes;
-    private final List<Set<Integer>> adjacencies;
+    private final Set<OnGraphChangeListener> onGraphChangeListeners = new HashSet<>();
+    private final List<Node> nodes = new ArrayList<>();
+    private final List<Set<Integer>> adjacencies = new ArrayList<>();
+    private Node focusedNode;
 
     public Graph() {
-        this(new ArrayList<T>());
+        this(new ArrayList<Node>());
     }
 
-    public Graph(List<T> nodes) {
-        this.nodes = new ArrayList<>(nodes);
-        this.adjacencies = new ArrayList<>(this.nodes.size());
-        for (int i = 0; i < this.nodes.size(); i++) {
+    public Graph(List<Node> nodes) {
+        this.nodes.addAll(nodes);
+        for (int i = 0; i < nodes.size(); i++) {
             adjacencies.add(new TreeSet<Integer>());
         }
     }
 
-    public Graph<T> setAdjacencyMatrix(int[][] adjacencyMatrix) {
-        if (adjacencyMatrix.length > nodes.size()) {
-            throw new IllegalArgumentException("Adjacency matrix is too big: " + adjacencyMatrix.length + " > " + nodes.size());
+    public Graph(Level level) {
+        for (int i = 0; i < level.getNumberOfNodes(); i++) {
+            Node node = new Node();
+            node.setIndex(i);
+            if (level.getCops() != null) {
+                for (int copIndex = 0; copIndex < level.getCops().size(); copIndex++) {
+                    Cop cop = level.getCops().get(copIndex);
+                    if (cop.getStartNode() == i) {
+                        node.setCop(true);
+                        break;
+                    }
+                }
+            }
+            if (level.getRobbers() != null) {
+                for (int robberIndex = 0; robberIndex < level.getRobbers().size(); robberIndex++) {
+                    Robber robber = level.getRobbers().get(robberIndex);
+                    if (robber.getStartNode() == i) {
+                        node.setRobber(true);
+                        break;
+                    }
+                }
+            }
+            nodes.add(node);
+        }
+        for (int i = 0; i < nodes.size(); i++) {
+            adjacencies.add(new TreeSet<Integer>());
+        }
+        new ArrayList<Node>(level.getNumberOfNodes());
+        for (int n1 = 0; n1 < level.getEdges().size(); n1++) {
+            for (Integer n2 : level.getEdges().get(n1)) {
+                addEdge(n1, n2);
+            }
+        }
+    }
+
+    public void setAdjacencyMatrix(int[][] adjacencyMatrix) {
+        if (adjacencyMatrix.length > adjacencies.size()) {
+            throw new IllegalArgumentException("Adjacency matrix is too big: " + adjacencyMatrix.length + " > " + adjacencies.size());
         }
         for (int row = 0; row < adjacencyMatrix.length; row++) {
             if (adjacencyMatrix[0].length != adjacencyMatrix.length) {
@@ -56,8 +93,6 @@ public class Graph<T> {
                 }
             }
         }
-
-        return this;
     }
 
     private void clearEdges() {
@@ -69,8 +104,8 @@ public class Graph<T> {
     public void randomizeEdges() {
         Random random = new Random();
         clearEdges();
-        for (int n1 = 0; n1 < this.nodes.size(); n1++) {
-            for (int n2 = n1 + 1; n2 < this.nodes.size(); n2++) {
+        for (int n1 = 0; n1 < adjacencies.size(); n1++) {
+            for (int n2 = n1 + 1; n2 < adjacencies.size(); n2++) {
                 if (random.nextBoolean()) {
                     addEdge(n1, n2);
                 }
@@ -78,15 +113,7 @@ public class Graph<T> {
         }
     }
 
-    public T getNode(int n) {
-        return nodes.get(n);
-    }
-
-    public List<T> getNodes() {
-        return nodes;
-    }
-
-    public Graph<T> addEdge(int n1, int n2) {
+    public Graph addEdge(int n1, int n2) {
         if (n1 != n2) {
             adjacencies.get(n1).add(n2);
             adjacencies.get(n2).add(n1);
@@ -102,6 +129,10 @@ public class Graph<T> {
         return adjacencies.get(n1).contains(n2);
     }
 
+    public boolean areNeighbours(Node n1, Node n2) {
+        return areNeighbours(n1.getIndex(), n2.getIndex());
+    }
+
     public Collection<Edge> getAllEdges() {
         Collection<Edge> edges = new ArrayList<>();
         for (int n1 = 0; n1 < adjacencies.size(); n1++) {
@@ -113,5 +144,43 @@ public class Graph<T> {
             }
         }
         return edges;
+    }
+
+    public int getNumberOfNodes() {
+        return adjacencies.size();
+    }
+
+    public List<Node> getNodes() {
+        return nodes;
+    }
+
+    public void notifyChanged() {
+        for (OnGraphChangeListener listener : onGraphChangeListeners) {
+            listener.onGraphChange();
+        }
+    }
+
+    public Node getFocusedNode() {
+        return focusedNode;
+    }
+
+    public void setFocusedNode(Node node) {
+        focusedNode = node;
+    }
+
+    public void setFocusedNode(int index) {
+        focusedNode = nodes.get(index);
+    }
+
+    public void addOnGraphChangeListener(OnGraphChangeListener listener) {
+        this.onGraphChangeListeners.add(listener);
+    }
+
+    public void removeOnGraphChangeListener(OnGraphChangeListener listener) {
+        this.onGraphChangeListeners.remove(listener);
+    }
+
+    public interface OnGraphChangeListener {
+        void onGraphChange();
     }
 }

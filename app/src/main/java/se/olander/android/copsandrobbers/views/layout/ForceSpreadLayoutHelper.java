@@ -5,6 +5,7 @@ import android.support.v4.math.MathUtils;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import se.olander.android.copsandrobbers.models.Graph;
@@ -15,15 +16,14 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
     private ArrayList<PointF> tempPoints;
     private Random random;
 
-    public ForceSpreadLayoutHelper(Graph<? extends View> graph) {
-        super(graph);
+    public ForceSpreadLayoutHelper() {
         this.random = new Random();
     }
 
     @Override
-    public void setGraph(Graph<? extends View> graph) {
-        super.setGraph(graph);
-        this.points = new ArrayList<>(graph.getNodes().size());
+    public void setNodes(List<? extends View> nodes) {
+        super.setNodes(nodes);
+        this.points = new ArrayList<>(getNodes().size());
         this.tempPoints = new ArrayList<>(this.points.size());
         for (int i = 0; i < this.points.size(); i++) {
             points.add(new PointF());
@@ -54,8 +54,8 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
                 po.y += dy;
             }
 
-            po.x = (float) MathUtils.clamp(po.x, left + 10, right - 10);
-            po.y = (float) MathUtils.clamp(po.y, top + 10, bottom - 10);
+            po.x = MathUtils.clamp(po.x, left + 10, right - 10);
+            po.y = MathUtils.clamp(po.y, top + 10, bottom - 10);
 
             float distanceLeft = p1.x - left;
             float distanceRight = right - p1.x;
@@ -88,8 +88,8 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
             iterate(left, top, right, bottom);
         }
 
-        for (int i = 0; i < getGraph().getNodes().size(); i++) {
-            View node = getGraph().getNode(i);
+        for (int i = 0; i < getNodes().size(); i++) {
+            View node = getNodes().get(i);
             PointF p = points.get(i);
             centerLayout(node, p);
         }

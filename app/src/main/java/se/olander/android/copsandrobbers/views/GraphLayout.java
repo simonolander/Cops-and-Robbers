@@ -10,11 +10,9 @@ import android.view.View;
 import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import se.olander.android.copsandrobbers.models.Edge;
 import se.olander.android.copsandrobbers.models.Graph;
-import se.olander.android.copsandrobbers.models.Level;
 import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
@@ -22,14 +20,14 @@ import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 public class GraphLayout extends RelativeLayout implements View.OnClickListener {
     private static final String TAG = GraphLayout.class.getSimpleName();
 
-    private Graph<NodeView> graph;
+    private Graph graph;
 
     private Paint edgePaint;
 
     private GraphLayoutHelper graphLayoutHelper;
 
-    private int currentRobberNodeIndex;
-    private Level level;
+    private OnNodeClickListener onNodeClickListener;
+    private ArrayList<NodeView> nodes;
 
     public GraphLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -40,7 +38,7 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
         edgePaint.setAntiAlias(true);
 
         setWillNotDraw(false);
-        graphLayoutHelper = new CircleLayoutHelper(new Graph<View>());
+        graphLayoutHelper = new CircleLayoutHelper();
     }
 
     @Override
@@ -51,8 +49,8 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
 
     private void drawEdges(Canvas canvas) {
         for (Edge edge : graph.getAllEdges()) {
-            NodeView n1 = graph.getNode(edge.getN1());
-            NodeView n2 = graph.getNode(edge.getN2());
+            NodeView n1 = nodes.get(edge.getN1());
+            NodeView n2 = nodes.get(edge.getN2());
             float cx1 = n1.getX() + n1.getWidth() / 2f;
             float cy1 = n1.getY() + n1.getHeight() / 2f;
             float cx2 = n2.getX() + n2.getWidth() / 2f;
@@ -69,49 +67,37 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
 
     @Override
     public void onClick(View view) {
-        if (view instanceof Node) {
-            onClick((Node) view);
+        if (view instanceof NodeView) {
+            if (this.onNodeClickListener != null) {
+                this.onNodeClickListener.onNodeClick(((NodeView) view).getNode());
+            }
         }
     }
 
-    private void onClick(Node node) {
-        int nodeIndex = node.getIndex();
-
-        if (nodeIndex == currentRobberNodeIndex) {
-            return;
-        }
-
-        if (!graph.areNeighbours(nodeIndex, currentRobberNodeIndex)) {
-            return;
-        }
-
-        NodeView currentRobberNode = graph.getNode(currentRobberNodeIndex);
-        currentRobberNode.setRobber(false);
-        node.setRobber(true);
-        currentRobberNodeIndex = nodeIndex;
+    public void setOnNodeClickListener(OnNodeClickListener listener) {
+        this.onNodeClickListener = listener;
     }
 
-    public void setLevel(Level level) {
-        this.level = level;
-        List<NodeView> nodes = new ArrayList<>();
-        for (int i = 0; i < level.getNumberOfNodes(); i++) {
+    public void setGraph(Graph graph) {
+        this.graph = graph;
+        nodes = new ArrayList<>();
+        removeAllViews();
+        for (int i = 0; i < graph.getNodes().size(); i++) {
+            Node node = graph.getNodes().get(i);
             NodeView nodeView = new NodeView(getContext());
+            nodeView.setNode(node);
             nodeView.setOnClickListener(this);
-            nodeView.setIndex(i);
-            nodeView.setRobber(this.currentRobberNodeIndex == i);
             addView(nodeView);
             nodes.add(nodeView);
         }
 
-        graph = new Graph<>(nodes);
-        for (int n1 = 0; n1 < level.getEdges().size(); n1++) {
-            for (Integer n2 : level.getEdges().get(n1)) {
-                graph.addEdge(n1, n2);
-            }
-        }
-
         graphLayoutHelper.setGraph(graph);
+        graphLayoutHelper.setNodes(nodes);
 
         postInvalidate();
+    }
+
+    public interface OnNodeClickListener {
+        void onNodeClick(Node node);
     }
 }

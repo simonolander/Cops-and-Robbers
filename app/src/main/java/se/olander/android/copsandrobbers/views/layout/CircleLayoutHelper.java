@@ -2,15 +2,9 @@ package se.olander.android.copsandrobbers.views.layout;
 
 import android.view.View;
 
-import se.olander.android.copsandrobbers.models.Graph;
-
 public class CircleLayoutHelper extends GraphLayoutHelper {
 
     private float radiusMultiplier = 0.8f;
-
-    public CircleLayoutHelper(Graph<? extends View> graph) {
-        super(graph);
-    }
 
     @Override
     public void layout(int left, int top, int right, int bottom) {
@@ -22,8 +16,8 @@ public class CircleLayoutHelper extends GraphLayoutHelper {
         float cy = (bottom + top) / 2;
 
         float minLeft = width, minTop = height, minRight = width, minBottom = height;
-        for (int i = 0; i < getGraph().getNodes().size(); i++) {
-            float angle = TAU * i / getGraph().getNodes().size();
+        for (int i = 0; i < getNodes().size(); i++) {
+            float angle = TAU * i / getNodes().size();
             float x = (float) (cx + Math.cos(angle) * radius);
             float y = (float) (cy + Math.sin(angle) * radius);
             minLeft = Math.min(minLeft, x);
@@ -35,9 +29,9 @@ public class CircleLayoutHelper extends GraphLayoutHelper {
         float offsetX = (minRight - minLeft) / 2;
         float offsetY = (minBottom - minTop) / 2;
 
-        for (int i = 0; i < getGraph().getNodes().size(); i++) {
-            View node = getGraph().getNodes().get(i);
-            float angle = TAU * i / getGraph().getNodes().size();
+        for (int i = 0; i < getNodes().size(); i++) {
+            View node = getNodes().get(i);
+            float angle = TAU * i / getNodes().size();
             float x = (float) (cx + Math.cos(angle) * radius + offsetX);
             float y = (float) (cy + Math.sin(angle) * radius + offsetY);
             centerLayout(node, x, y);

@@ -8,6 +8,8 @@ public class Level implements Serializable {
     private String title;
     private int numberOfNodes;
     private List<List<Integer>> edges;
+    private List<Robber> robbers;
+    private List<Cop> cops;
 
     public String getTitle() {
         return title;
@@ -33,32 +35,19 @@ public class Level implements Serializable {
         this.edges = edges;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Level level = (Level) o;
-
-        if (numberOfNodes != level.numberOfNodes) return false;
-        if (title != null ? !title.equals(level.title) : level.title != null) return false;
-        return edges != null ? edges.equals(level.edges) : level.edges == null;
+    public List<Robber> getRobbers() {
+        return robbers;
     }
 
-    @Override
-    public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + numberOfNodes;
-        result = 31 * result + (edges != null ? edges.hashCode() : 0);
-        return result;
+    public void setRobbers(List<Robber> robbers) {
+        this.robbers = robbers;
     }
 
-    @Override
-    public String toString() {
-        return "Level{" +
-                "title='" + title + '\'' +
-                ", numberOfNodes=" + numberOfNodes +
-                ", edges=" + edges +
-                '}';
+    public List<Cop> getCops() {
+        return cops;
+    }
+
+    public void setCops(List<Cop> cops) {
+        this.cops = cops;
     }
 }

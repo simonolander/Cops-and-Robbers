@@ -1,8 +1,21 @@
 {
-  "title": "Level 1",
-  "numberOfNodes": 2,
+  "title": "Tutorial",
+  "numberOfNodes": 5,
   "edges": [
     [1],
-    [0]
+    [2],
+    [3],
+    [4],
+    []
+  ],
+  "robbers": [
+    {
+      "startNode": 2
+    }
+  ],
+  "cops": [
+    {
+      "startNode": 0
+    }
   ]
 }
