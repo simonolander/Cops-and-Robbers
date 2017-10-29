@@ -1,10 +1,15 @@
 package se.olander.android.copsandrobbers.views;
 
 import android.content.Context;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.MaskFilter;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -13,7 +18,7 @@ import se.olander.android.copsandrobbers.models.Node;
 
 import static se.olander.android.copsandrobbers.views.ViewUtils.getMeasurement;
 
-public class NodeView extends View {
+public class NodeView extends View implements Node.OnNodeChangeListener {
 
     private static final String TAG = NodeView.class.getSimpleName();
 
@@ -25,6 +30,8 @@ public class NodeView extends View {
     private final Paint fillPaint;
     private final Paint fillPaintFocused;
     private final Paint fillPaintRobber;
+    private final Paint fillPaintCop;
+    private final Paint focusPaint;
     private final Paint strokePaint;
 
     private Node node;
@@ -58,6 +65,13 @@ public class NodeView extends View {
 
         fillPaintRobber = new Paint(fillPaint);
         fillPaintRobber.setColor(0xffa03030);
+
+        fillPaintCop = new Paint(fillPaint);
+        fillPaintCop.setColor(Color.BLUE);
+
+        focusPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        focusPaint.setColor(0xff30a030);
+        focusPaint.setMaskFilter(new BlurMaskFilter(25, BlurMaskFilter.Blur.OUTER));
 
         strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         strokePaint.setStyle(Paint.Style.STROKE);
@@ -112,11 +126,21 @@ public class NodeView extends View {
         float r = getRadius();
         float cx = r + strokeWidth + getPaddingLeft();
         float cy = r + strokeWidth + getPaddingTop();
+
         canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
+
+        if (node.isFocused()) {
+            canvas.drawCircle(cx, cy, r, focusPaint);
+        }
     }
 
     private Paint getFillPaint() {
+
+        if (node.isCop()) {
+            return fillPaintCop;
+        }
+
         if (node.isRobber()) {
             return fillPaintRobber;
         }
@@ -132,10 +156,19 @@ public class NodeView extends View {
     }
 
     public void setNode(Node node) {
+        if (this.node != null) {
+            this.node.setOnNodeChangeListener(null);
+        }
         this.node = node;
+        this.node.setOnNodeChangeListener(this);
     }
 
     public Node getNode() {
         return node;
+    }
+
+    @Override
+    public void onNodeChange() {
+        postInvalidate();
     }
 }

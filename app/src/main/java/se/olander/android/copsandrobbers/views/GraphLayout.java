@@ -17,7 +17,7 @@ import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 
-public class GraphLayout extends RelativeLayout implements View.OnClickListener {
+public class GraphLayout extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener {
     private static final String TAG = GraphLayout.class.getSimpleName();
 
     private Graph graph;
@@ -79,7 +79,6 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
     }
 
     public void setGraph(Graph graph) {
-        this.graph = graph;
         nodes = new ArrayList<>();
         removeAllViews();
         for (int i = 0; i < graph.getNodes().size(); i++) {
@@ -94,6 +93,18 @@ public class GraphLayout extends RelativeLayout implements View.OnClickListener 
         graphLayoutHelper.setGraph(graph);
         graphLayoutHelper.setNodes(nodes);
 
+        if (this.graph != null) {
+            this.graph.removeOnGraphChangeListener(this);
+        }
+
+        graph.addOnGraphChangeListener(this);
+        this.graph = graph;
+
+        postInvalidate();
+    }
+
+    @Override
+    public void onGraphChange() {
         postInvalidate();
     }
 

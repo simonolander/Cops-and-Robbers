@@ -15,7 +15,6 @@ public class Graph {
     private final Set<OnGraphChangeListener> onGraphChangeListeners = new HashSet<>();
     private final List<Node> nodes = new ArrayList<>();
     private final List<Set<Integer>> adjacencies = new ArrayList<>();
-    private Node focusedNode;
 
     public Graph() {
         this(new ArrayList<Node>());
@@ -161,15 +160,12 @@ public class Graph {
     }
 
     public Node getFocusedNode() {
-        return focusedNode;
-    }
-
-    public void setFocusedNode(Node node) {
-        focusedNode = node;
-    }
-
-    public void setFocusedNode(int index) {
-        focusedNode = nodes.get(index);
+        for (Node node : nodes) {
+            if (node.isFocused()) {
+                return node;
+            }
+        }
+        return null;
     }
 
     public void addOnGraphChangeListener(OnGraphChangeListener listener) {

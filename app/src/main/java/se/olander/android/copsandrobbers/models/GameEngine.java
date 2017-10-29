@@ -25,18 +25,28 @@ public class GameEngine implements GraphLayout.OnNodeClickListener {
 
             Node focusedNode = graph.getFocusedNode();
             if (focusedNode == null) {
-                graph.setFocusedNode(node);
-                graph.notifyChanged();
+                node.setFocused(true);
                 return;
             }
 
             if (focusedNode.isCop()) {
                 if (graph.areNeighbours(node, focusedNode)) {
-                    node.setCop(false);
-                    focusedNode.setCop(true);
-                    graph.notifyChanged();
+                    focusedNode.setCop(false);
+                    focusedNode.setFocused(false);
+                    node.setCop(true);
+                    node.setFocused(true);
                     return;
                 }
+                else {
+                    focusedNode.setFocused(false);
+                    node.setFocused(true);
+                    return;
+                }
+            }
+            else {
+                focusedNode.setFocused(false);
+                node.setFocused(true);
+                return;
             }
         }
     }
