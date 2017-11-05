@@ -17,6 +17,7 @@ import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.ForceSpreadLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
+import se.olander.android.copsandrobbers.views.layout.RandomLayoutHelper;
 
 public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener {
     private static final String TAG = GraphView.class.getSimpleName();
@@ -39,7 +40,7 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         edgePaint.setAntiAlias(true);
 
         setWillNotDraw(false);
-        graphLayoutHelper = new ForceSpreadLayoutHelper();
+        graphLayoutHelper = new RandomLayoutHelper();
     }
 
     @Override
@@ -102,14 +103,6 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         this.graph = graph;
 
         postInvalidate();
-        post(new Runnable() {
-            @Override
-            public void run() {
-                requestLayout();
-                postInvalidate();
-                postDelayed(this, 100);
-            }
-        });
     }
 
     @Override
