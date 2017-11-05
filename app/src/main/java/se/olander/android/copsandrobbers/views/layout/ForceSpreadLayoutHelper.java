@@ -12,6 +12,10 @@ import se.olander.android.copsandrobbers.models.Graph;
 
 public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
+    public static final float ATTRACTION = 10f;
+    public static final float REPULSION = 1;
+    private static final int ITERATIONS = 1;
+
     private ArrayList<PointF> points;
     private ArrayList<PointF> tempPoints;
     private Random random;
@@ -23,68 +27,102 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
     @Override
     public void setNodes(List<? extends View> nodes) {
         super.setNodes(nodes);
-        this.points = new ArrayList<>(getNodes().size());
-        this.tempPoints = new ArrayList<>(this.points.size());
-        for (int i = 0; i < this.points.size(); i++) {
+    }
+
+    @Override
+    public void setGraph(Graph graph) {
+        super.setGraph(graph);
+        this.points = new ArrayList<>();
+        this.tempPoints = new ArrayList<>();
+        for (int i = 0; i < graph.getNumberOfNodes(); i++) {
             points.add(new PointF());
             tempPoints.add(new PointF());
         }
+        reset(0, 0, 700, 1800);
     }
 
     private void iterate(float left, float top, float right, float bottom) {
-        float force = 0.1f;
-        float maxDistance = Math.max(right - left, bottom - top);
+        float width = right - left;
+        float height = bottom - top;
+        float maxDistance = Math.max(width, height);
         for (int i1 = 0; i1 < points.size(); i1++) {
-            PointF p1 = points.get(i1);
-            PointF po = tempPoints.get(i1);
-            po.set(p1);
+            PointF in = points.get(i1);
+            PointF out = tempPoints.get(i1);
+            out.set(in);
             for (int i2 = 0; i2 < tempPoints.size(); i2++) {
                 if (i1 == i2) {
                     continue;
                 }
 
-                PointF p2 = points.get(i2);
-                boolean adjacent = getGraph().areNeighbours(i1, i2);
-                float f = adjacent ? force/2 : force;
-                float distanceX = p1.x - p2.x;
-                float distanceY = p1.y - p2.y;
-                float dx = f / (distanceX / maxDistance);
-                float dy = f / (distanceY / maxDistance);
-                po.x += dx;
-                po.y += dy;
+                PointF other = points.get(i2);
+
+                float dx = other.x - in.x;
+                float dy = other.y - in.y;
+                dx /= maxDistance;
+                dy /= maxDistance;
+                float attractionX = 0;
+                float attractionY = 0;
+
+                if (getGraph().areNeighbours(i1, i2)) {
+                    attractionX = ATTRACTION * dx;
+                    attractionY = ATTRACTION * dy;
+                }
+
+                float distanceSquared = dx*dx + dy*dy;
+                float distance = (float) Math.sqrt(distanceSquared);
+                float repulsionX = - REPULSION / distanceSquared * dx / distance;
+                float repulsionY = - REPULSION / distanceSquared * dy / distance;
+                float forceX = attractionX + repulsionX;
+                float forceY = attractionY + repulsionY;
+
+                out.x += forceX;
+                out.y += forceY;
             }
 
-            po.x = MathUtils.clamp(po.x, left + 10, right - 10);
-            po.y = MathUtils.clamp(po.y, top + 10, bottom - 10);
+            float distanceLeft = (in.x - left) / width;
+            float distanceRight = (right - in.x) / width;
+            float distanceTop = (in.y - top) / height;
+            float distanceBottom = (bottom - in.y) / height;
 
-            float distanceLeft = p1.x - left;
-            float distanceRight = right - p1.x;
-            float distanceTop = p1.y - top;
-            float distanceBottom = bottom - p1.y;
+            float repulsionLeft = REPULSION / (distanceLeft * distanceLeft);
+            float repulsionRight = REPULSION / (distanceRight * distanceRight);
+            float repulsionTop = REPULSION / (distanceTop * distanceTop);
+            float repulsionBottom = REPULSION / (distanceBottom * distanceBottom);
 
-            po.x += force / (distanceLeft / maxDistance);
-            po.x -= force / (distanceRight / maxDistance);
-            po.y += force / (distanceTop / maxDistance);
-            po.y -= force / (distanceBottom / maxDistance);
+            out.x += repulsionLeft;
+            out.x -= repulsionRight;
+            out.y += repulsionTop;
+            out.y -= repulsionBottom;
+
+            out.x = MathUtils.clamp(out.x, left + 100, right - 100);
+            out.y = MathUtils.clamp(out.y, top + 100, bottom - 100);
         }
+
         for (int i = 0; i < points.size(); i++) {
             points.get(i).set(tempPoints.get(i));
         }
     }
 
     private void reset(int left, int top, int right, int bottom) {
+        float cx = (right - left) / 2;
+        float cy = (bottom - top) / 2;
+        int paddingX = (int) ((right - left) * 0.1);
+        int paddingY = (int) ((bottom - top) * 0.1);
+        int minLeft = left + paddingX;
+        int minTop = top + paddingY;
+        int minRight = right - paddingX;
+        int minBottom = bottom - paddingY;
         for (PointF point : points) {
-            float cx = (right - left) / 2;
-            float cy = (bottom - top) / 2;
-            point.set(cx + random.nextFloat()*10, cy + random.nextFloat()*10);
+            point.set(
+                    minLeft + random.nextInt(minRight - minLeft),
+                    minTop + random.nextInt(minBottom - minTop)
+            );
         }
     }
 
     @Override
     public void layout(int left, int top, int right, int bottom) {
-        reset(left, top, right, bottom);
-
-        for (int i = 0; i < 1000; ++i) {
+        for (int i = 0; i < ITERATIONS; ++i) {
             iterate(left, top, right, bottom);
         }
 

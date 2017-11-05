@@ -4,11 +4,16 @@ package se.olander.android.copsandrobbers.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class Graph {
 
@@ -178,5 +183,51 @@ public class Graph {
 
     public interface OnGraphChangeListener {
         void onGraphChange();
+    }
+
+    public List<Node> path(Node from, Node to) {
+        if (from.getIndex() == to.getIndex()) {
+            return new ArrayList<>();
+        }
+
+        Integer[] previous = new Integer[nodes.size()];
+        boolean[] visited = new boolean[nodes.size()];
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(from.getIndex());
+        while (!queue.isEmpty()) {
+            Integer n = queue.poll();
+            visited[n] = true;
+            if (to.getIndex() == n) {
+                break;
+            }
+            for (Integer neighbour : getNeighbours(n)) {
+                if (!visited[neighbour]) {
+                    queue.add(neighbour);
+                }
+            }
+        }
+
+        LinkedList<Node> path = new LinkedList<>();
+        Integer c = to.getIndex();
+        while (c != null) {
+            path.addFirst(nodes.get(c));
+            c = previous[c];
+        }
+        return path;
+    }
+
+    public ClosestNodeResponse getClosestCop(Node node) {
+        ClosestNodeResponse response = new ClosestNodeResponse();
+        for (Node n : nodes) {
+            if (n.isCop()) {
+                int distance = path(node, n).size();
+                if (distance < response.distance) {
+                    response.distance = distance;
+                    response.node = n;
+                }
+            }
+        }
+
+        return response;
     }
 }

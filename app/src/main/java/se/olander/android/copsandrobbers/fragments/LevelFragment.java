@@ -6,19 +6,20 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import se.olander.android.copsandrobbers.R;
 import se.olander.android.copsandrobbers.models.GameEngine;
 import se.olander.android.copsandrobbers.models.Level;
-import se.olander.android.copsandrobbers.views.GraphLayout;
+import se.olander.android.copsandrobbers.views.GraphView;
 
 
-public class LevelFragment extends Fragment {
+public class LevelFragment extends Fragment implements GameEngine.OnGameEventHandler {
 
     public static final String LEVEL_KEY = "level";
 
     private Level level;
-    private GraphLayout graphLayout;
+    private GraphView graphView;
     private GameEngine gameEngine;
 
     @Override
@@ -26,6 +27,7 @@ public class LevelFragment extends Fragment {
         super.onCreate(savedInstanceState);
         level = (Level) getArguments().getSerializable(LEVEL_KEY);
         gameEngine = new GameEngine(level);
+        gameEngine.setOnGameEventHandler(this);
     }
 
     @Nullable
@@ -33,9 +35,9 @@ public class LevelFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view = inflater.inflate(R.layout.fragment_level, container, false);
-        graphLayout = view.findViewById(R.id.graph);
-        graphLayout.setGraph(gameEngine.getGraph());
-        graphLayout.setOnNodeClickListener(gameEngine);
+        graphView = view.findViewById(R.id.graph);
+        graphView.setGraph(gameEngine.getGraph());
+        graphView.setOnNodeClickListener(gameEngine);
 
         return view;
     }
@@ -45,5 +47,10 @@ public class LevelFragment extends Fragment {
     }
 
     private void moveCop(int from, int to) {
+    }
+
+    @Override
+    public void victory() {
+        Toast.makeText(getContext(), "Victory!", Toast.LENGTH_SHORT).show();
     }
 }

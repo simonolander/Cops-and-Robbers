@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <se.olander.android.copsandrobbers.views.GraphLayout
+    <se.olander.android.copsandrobbers.views.GraphView
         android:id="@+id/graph"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
