@@ -2,6 +2,7 @@ package se.olander.android.copsandrobbers.views.layout;
 
 import android.graphics.PointF;
 import android.support.v4.math.MathUtils;
+import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -12,13 +13,22 @@ import se.olander.android.copsandrobbers.models.Graph;
 
 public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
-    public static final float ATTRACTION = 10f;
-    public static final float REPULSION = 1;
-    private static final int ITERATIONS = 1;
+    private static final String TAG = ForceSpreadLayoutHelper.class.getSimpleName();
 
-    private ArrayList<PointF> points;
-    private ArrayList<PointF> tempPoints;
+    private static final float ATTRACTION_CONSTANT = 1.5f;
+    private static final float REPULSION_CONSTANT = 10000000f;
+    private static final int ITERATIONS = 1000;
+    private static final float PROXIMITY_MIN_VALUE = 1.0f;
+    private static final float DEFAULT_SPRING_LENGTH = 200f;
+    private static final float DAMPING = 0.3f;
+    private static final float MINIMUM_MOVEMENT_THRESHOLD = 1f;
+    private static final float PADDING = 50f;
+
+    private PointF tempPoint;
+    private PointF[] points;
+    private PointF[] velocities;
     private Random random;
+    private int iteration;
 
     public ForceSpreadLayoutHelper() {
         this.random = new Random();
@@ -32,103 +42,185 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
     @Override
     public void setGraph(Graph graph) {
         super.setGraph(graph);
-        this.points = new ArrayList<>();
-        this.tempPoints = new ArrayList<>();
+        this.tempPoint = new PointF();
+        this.points = new PointF[graph.getNumberOfNodes()];
+        this.velocities = new PointF[graph.getNumberOfNodes()];
         for (int i = 0; i < graph.getNumberOfNodes(); i++) {
-            points.add(new PointF());
-            tempPoints.add(new PointF());
+            points[i] = new PointF();
+            velocities[i] = new PointF();
         }
-        reset(0, 0, 700, 1800);
     }
 
-    private void iterate(float left, float top, float right, float bottom) {
+    private float calculateLength(PointF p) {
+        return (float) Math.sqrt(p.x * p.x + p.y * p.y);
+    }
+
+    private PointF calculateDirection(PointF p1, PointF p2, PointF out) {
+        out.set(p2);
+        out.x -= p1.x;
+        out.y -= p1.y;
+        float length = calculateLength(out);
+        out.x /= length;
+        out.y /= length;
+        return out;
+    }
+
+    private float calculateProximity(PointF p1, PointF p2) {
+        float dx = p2.x - p1.x;
+        float dy = p2.y - p1.y;
+        return (float) Math.max(Math.sqrt(dx*dx + dy*dy), PROXIMITY_MIN_VALUE);
+    }
+
+    private PointF calculateRepulsion(PointF p1, PointF p2, PointF out) {
+        float proximity = calculateProximity(p1, p2);
+        float force = REPULSION_CONSTANT / (proximity * proximity);
+        calculateDirection(p1, p2, out);
+        out.negate();
+        out.x *= force;
+        out.y *= force;
+        return out;
+    }
+
+    private PointF calculateAttraction(PointF p1, PointF p2, float springLength, PointF out) {
+        float proximity = calculateProximity(p1, p2);
+        float force = ATTRACTION_CONSTANT * Math.max(proximity - springLength, 0);
+        calculateDirection(p1, p2, out);
+        out.x *= force;
+        out.y *= force;
+        return out;
+    }
+
+    private float iterate(float left, float top, float right, float bottom) {
         float width = right - left;
         float height = bottom - top;
         float maxDistance = Math.max(width, height);
-        for (int i1 = 0; i1 < points.size(); i1++) {
-            PointF in = points.get(i1);
-            PointF out = tempPoints.get(i1);
-            out.set(in);
-            for (int i2 = 0; i2 < tempPoints.size(); i2++) {
+        float minDistance = Math.min(width, height);
+        float springLength = (float) Math.max(minDistance / Math.sqrt(getGraph().getNumberOfNodes()), DEFAULT_SPRING_LENGTH);
+        float totalMovement = 0;
+        for (int i1 = 0; i1 < points.length; i1++) {
+            PointF p1 = points[i1];
+            PointF velocity = velocities[i1];
+            for (int i2 = 0; i2 < points.length; i2++) {
                 if (i1 == i2) {
                     continue;
                 }
 
-                PointF other = points.get(i2);
+                PointF p2 = points[i2];
 
-                float dx = other.x - in.x;
-                float dy = other.y - in.y;
-                dx /= maxDistance;
-                dy /= maxDistance;
-                float attractionX = 0;
-                float attractionY = 0;
+                calculateRepulsion(p1, p2, tempPoint);
+
+                velocity.x += tempPoint.x;
+                velocity.y += tempPoint.y;
 
                 if (getGraph().areNeighbours(i1, i2)) {
-                    attractionX = ATTRACTION * dx;
-                    attractionY = ATTRACTION * dy;
+                    calculateAttraction(p1, p2, springLength, tempPoint);
+                    velocity.x += tempPoint.x;
+                    velocity.y += tempPoint.y;
                 }
-
-                float distanceSquared = dx*dx + dy*dy;
-                float distance = (float) Math.sqrt(distanceSquared);
-                float repulsionX = - REPULSION / distanceSquared * dx / distance;
-                float repulsionY = - REPULSION / distanceSquared * dy / distance;
-                float forceX = attractionX + repulsionX;
-                float forceY = attractionY + repulsionY;
-
-                out.x += forceX;
-                out.y += forceY;
             }
 
-            float distanceLeft = (in.x - left) / width;
-            float distanceRight = (right - in.x) / width;
-            float distanceTop = (in.y - top) / height;
-            float distanceBottom = (bottom - in.y) / height;
+            float proximityLeft = p1.x - left;
+            float proximityRight = right - p1.x;
+            float proximityTop = p1.y - top;
+            float proximityBottom = bottom - p1.y;
 
-            float repulsionLeft = REPULSION / (distanceLeft * distanceLeft);
-            float repulsionRight = REPULSION / (distanceRight * distanceRight);
-            float repulsionTop = REPULSION / (distanceTop * distanceTop);
-            float repulsionBottom = REPULSION / (distanceBottom * distanceBottom);
+            if (proximityLeft > PADDING) {
+                velocity.x += REPULSION_CONSTANT / (proximityLeft * proximityLeft);
+            }
+            else {
+                velocity.x += 10;
+            }
 
-            out.x += repulsionLeft;
-            out.x -= repulsionRight;
-            out.y += repulsionTop;
-            out.y -= repulsionBottom;
+            if (proximityRight > PADDING) {
+                velocity.x -= REPULSION_CONSTANT / (proximityRight * proximityRight);
+            }
+            else {
+                velocity.x -= 10;
+            }
 
-            out.x = MathUtils.clamp(out.x, left + 100, right - 100);
-            out.y = MathUtils.clamp(out.y, top + 100, bottom - 100);
+            if (proximityTop > PADDING) {
+                velocity.y += REPULSION_CONSTANT / (proximityTop * proximityTop);
+            }
+            else {
+                velocity.y += 10;
+            }
+
+            if (proximityBottom > PADDING) {
+                velocity.y -= REPULSION_CONSTANT / (proximityBottom * proximityBottom);
+            }
+            else {
+                velocity.y -= 10;
+            }
+
+            velocity.x *= DAMPING;
+            velocity.y *= DAMPING;
+
+            float v = calculateLength(velocity);
+            if (v > 50) {
+                velocity.x *= 50 / v;
+                velocity.y *= 50 / v;
+            }
         }
 
-        for (int i = 0; i < points.size(); i++) {
-            points.get(i).set(tempPoints.get(i));
+        for (int i = 0; i < points.length; i++) {
+            PointF point = points[i];
+            PointF velocity = velocities[i];
+            point.x += velocity.x;
+            point.y += velocity.y;
+            totalMovement += calculateLength(velocity);
         }
+
+        return totalMovement;
     }
 
-    private void reset(int left, int top, int right, int bottom) {
-        float cx = (right - left) / 2;
-        float cy = (bottom - top) / 2;
+    public void reset(int left, int top, int right, int bottom) {
         int paddingX = (int) ((right - left) * 0.1);
         int paddingY = (int) ((bottom - top) * 0.1);
         int minLeft = left + paddingX;
         int minTop = top + paddingY;
         int minRight = right - paddingX;
         int minBottom = bottom - paddingY;
-        for (PointF point : points) {
-            point.set(
+        for (int i = 0; i < points.length; ++i) {
+            points[i].set(
                     minLeft + random.nextInt(minRight - minLeft),
                     minTop + random.nextInt(minBottom - minTop)
             );
+            velocities[i].set(0, 0);
         }
+        iteration = 0;
     }
 
-    @Override
-    public void layout(int left, int top, int right, int bottom) {
-        for (int i = 0; i < ITERATIONS; ++i) {
-            iterate(left, top, right, bottom);
+    public boolean step(int left, int top, int right, int bottom) {
+        float totalMovement = iterate(left, top, right, bottom);
+        iteration += 1;
+
+        if (totalMovement < MINIMUM_MOVEMENT_THRESHOLD) {
+            while (iteration <= ITERATIONS) {
+                iterate(left, top, right, bottom);
+                iteration += 1;
+            }
         }
 
         for (int i = 0; i < getNodes().size(); i++) {
             View node = getNodes().get(i);
-            PointF p = points.get(i);
+            PointF p = points[i];
+            centerLayout(node, p);
+        }
+
+        return iteration > ITERATIONS || totalMovement < MINIMUM_MOVEMENT_THRESHOLD;
+    }
+
+    @Override
+    public void layout(int left, int top, int right, int bottom) {
+        reset(left, top, right, bottom);
+        float totalMovement = iterate(left, top, right, bottom);
+        for (int i = 0; i < ITERATIONS && totalMovement > MINIMUM_MOVEMENT_THRESHOLD; ++i) {
+            totalMovement = iterate(left, top, right, bottom);
+        }
+
+        for (int i = 0; i < getNodes().size(); i++) {
+            View node = getNodes().get(i);
+            PointF p = points[i];
             centerLayout(node, p);
         }
     }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -25,11 +26,14 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     private Graph graph;
 
     private Paint edgePaint;
+    private Paint loadingTextPaint;
 
     private GraphLayoutHelper graphLayoutHelper;
 
     private OnNodeClickListener onNodeClickListener;
     private ArrayList<NodeView> nodes;
+
+    private boolean initialized;
 
     public GraphView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -39,14 +43,23 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         edgePaint.setStrokeWidth(10);
         edgePaint.setAntiAlias(true);
 
+        loadingTextPaint = new Paint();
+        loadingTextPaint.setColor(Color.GRAY);
+        loadingTextPaint.setTextAlign(Paint.Align.CENTER);
+        loadingTextPaint.setTextSize(200);
+
         setWillNotDraw(false);
-        graphLayoutHelper = new RandomLayoutHelper();
+        graphLayoutHelper = new ForceSpreadLayoutHelper();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawEdges(canvas);
+        if (!initialized) {
+            canvas.drawColor(Color.BLUE, PorterDuff.Mode.OVERLAY);
+            drawLoadingText(canvas);
+        }
     }
 
     private void drawEdges(Canvas canvas) {
@@ -61,10 +74,40 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         }
     }
 
+    private void drawLoadingText(Canvas canvas) {
+        String text = "Loading";
+        float measureText = loadingTextPaint.measureText(text);
+
+
+
+        canvas.drawText(text, getWidth() / 2, getHeight() / 2, loadingTextPaint);
+    }
+
     @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    protected void onLayout(boolean changed, final int left, final int top, final int right, final int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        graphLayoutHelper.layout(left, top, right, bottom);
+        if (this.graphLayoutHelper instanceof ForceSpreadLayoutHelper) {
+            final ForceSpreadLayoutHelper layoutHelper = (ForceSpreadLayoutHelper) this.graphLayoutHelper;
+            layoutHelper.reset(left, top, right, bottom);
+            initialized = false;
+            post(new Runnable() {
+                @Override
+                public void run() {
+                    boolean done = layoutHelper.step(left, top, right, bottom);
+                    postInvalidate();
+
+                    if (!done) {
+                        postDelayed(this, 10);
+                    }
+                    else {
+                        initialized = true;
+                    }
+                }
+            });
+        }
+        else {
+            graphLayoutHelper.layout(left, top, right, bottom);
+        }
     }
 
     @Override
