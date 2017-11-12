@@ -19,7 +19,7 @@ public class GameEngine implements GraphView.OnNodeClickListener {
         gameState = GameState.MOVE_COPS;
 
         for (Cop cop : graph.getCops()) {
-            cop.getCurrentNode().setHighlight(Color.BLUE);
+            cop.getCurrentNode().setHighlight(Color.GRAY);
         }
     }
 
@@ -32,13 +32,12 @@ public class GameEngine implements GraphView.OnNodeClickListener {
         if (focusedCop != null) {
             Node focusedNode = focusedCop.getCurrentNode();
             if (graph.areNeighbours(focusedCop.getCurrentNode(), node)) {
-                focusedNode.setHighlight(null);
-                for (Node neighbour : graph.getNeighbours(focusedNode)) {
-                    neighbour.setHighlight(null);
+                for (Node n : graph.getNodes()) {
+                    n.setHighlight(null);
                 }
                 focusedCop.move(node);
                 focusedNode = node;
-                focusedNode.setHighlight(Color.GREEN);
+                focusedNode.setHighlight(Color.BLUE);
                 for (Node neighbour : graph.getNeighbours(focusedNode)) {
                     neighbour.setHighlight(Color.GREEN);
                 }
@@ -48,7 +47,7 @@ public class GameEngine implements GraphView.OnNodeClickListener {
         else {
             if (node.getCops().size() == 1) {
                 Cop cop = node.getAnyCop();
-                cop.getCurrentNode().setHighlight(Color.GREEN);
+                cop.getCurrentNode().setHighlight(Color.BLUE);
                 for (Node neighbour : graph.getNeighbours(cop.getCurrentNode())) {
                     neighbour.setHighlight(Color.GREEN);
                 }

@@ -3,5 +3,15 @@
   "numberOfNodes": 1,
   "edges": [
     []
+  ],
+  "robbers": [
+    {
+      "startNode": 0
+    }
+  ],
+  "cops": [
+    {
+      "startNode": 0
+    }
   ]
 }

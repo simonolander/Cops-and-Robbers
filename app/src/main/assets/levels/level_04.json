@@ -4,5 +4,15 @@
   "edges": [
     [1],
     [0]
+  ],
+  "robbers": [
+    {
+      "startNode": 1
+    }
+  ],
+  "cops": [
+    {
+      "startNode": 0
+    }
   ]
 }

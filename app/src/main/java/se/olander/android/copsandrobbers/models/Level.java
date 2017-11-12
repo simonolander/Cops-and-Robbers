@@ -51,7 +51,7 @@ public class Level implements Serializable {
         this.cops = cops;
     }
 
-    public static class Cop {
+    public static class Cop implements Serializable {
         private int startNode;
 
         public int getStartNode() {
@@ -63,7 +63,7 @@ public class Level implements Serializable {
         }
     }
 
-    public static class Robber {
+    public static class Robber implements Serializable {
         private int startNode;
 
         public int getStartNode() {
