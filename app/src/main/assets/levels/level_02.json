@@ -1,24 +1,22 @@
 {
   "title": "Level 2",
-  "numberOfNodes": 8,
+  "numberOfNodes": 6,
   "edges": [
-    [1],
-    [2],
-    [3, 7],
-    [4],
-    [5],
-    [6],
-    [7, 2],
-    [0],
+    [1, 2, 4, 5],
+    [0, 3, 4, 5],
+    [0, 2, 4],
+    [1, 2, 4],
+    [0, 1, 2, 3],
+    [0, 1]
   ],
   "robbers": [
     {
-      "startNode": 1
+      "startNode": 3
     }
   ],
   "cops": [
     {
-      "startNode": 0
+      "startNode": 5
     }
   ]
 }
