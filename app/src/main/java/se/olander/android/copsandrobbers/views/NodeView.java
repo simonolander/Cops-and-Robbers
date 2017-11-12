@@ -4,12 +4,8 @@ import android.content.Context;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.MaskFilter;
 import android.graphics.Paint;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -130,18 +126,19 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
         canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
 
-        if (node.isFocused()) {
+        if (node.getHighlight() != null) {
+            focusPaint.setColor(node.getHighlight());
             canvas.drawCircle(cx, cy, r, focusPaint);
         }
     }
 
     private Paint getFillPaint() {
 
-        if (node.isCop()) {
+        if (node.getCops().size() > 0) {
             return fillPaintCop;
         }
 
-        if (node.isRobber()) {
+        if (node.getRobbers().size() > 0) {
             return fillPaintRobber;
         }
 

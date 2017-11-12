@@ -7,6 +7,8 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.DragEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
@@ -86,18 +88,21 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     @Override
     protected void onLayout(boolean changed, final int left, final int top, final int right, final int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (this.graphLayoutHelper instanceof ForceSpreadLayoutHelper) {
+        if (false && this.graphLayoutHelper instanceof ForceSpreadLayoutHelper) {
             final ForceSpreadLayoutHelper layoutHelper = (ForceSpreadLayoutHelper) this.graphLayoutHelper;
             layoutHelper.reset(left, top, right, bottom);
             initialized = false;
             post(new Runnable() {
                 @Override
                 public void run() {
-                    boolean done = layoutHelper.step(left, top, right, bottom);
+                    float totalMovement = layoutHelper.step(left, top, right, bottom);
                     postInvalidate();
 
-                    if (!done) {
-                        postDelayed(this, 10);
+                    if (totalMovement > ForceSpreadLayoutHelper.MINIMUM_MOVEMENT_THRESHOLD) {
+                        long delayMillis = totalMovement > 10
+                                ? 10
+                                : (long) totalMovement;
+                        postDelayed(this, delayMillis);
                     }
                     else {
                         initialized = true;
@@ -106,6 +111,7 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
             });
         }
         else {
+            initialized = true;
             graphLayoutHelper.layout(left, top, right, bottom);
         }
     }

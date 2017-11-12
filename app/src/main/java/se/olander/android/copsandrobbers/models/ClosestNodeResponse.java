@@ -1,10 +1,10 @@
 package se.olander.android.copsandrobbers.models;
 
-/**
- * Created by sios on 2017-10-29.
- */
+import java.util.List;
 
 public class ClosestNodeResponse {
     public int distance = Integer.MAX_VALUE;
-    public Node node;
+    public List<Node> path;
+    public Node from;
+    public Node to;
 }

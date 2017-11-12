@@ -4,7 +4,6 @@ package se.olander.android.copsandrobbers.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,14 +11,14 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class Graph {
 
     private final Set<OnGraphChangeListener> onGraphChangeListeners = new HashSet<>();
     private final List<Node> nodes = new ArrayList<>();
     private final List<Set<Integer>> adjacencies = new ArrayList<>();
+    private final List<Cop> cops;
+    private final List<Robber> robbers;
 
     public Graph() {
         this(new ArrayList<Node>());
@@ -30,30 +29,14 @@ public class Graph {
         for (int i = 0; i < nodes.size(); i++) {
             adjacencies.add(new TreeSet<Integer>());
         }
+        cops = new ArrayList<>();
+        robbers = new ArrayList<>();
     }
 
     public Graph(Level level) {
         for (int i = 0; i < level.getNumberOfNodes(); i++) {
             Node node = new Node();
             node.setIndex(i);
-            if (level.getCops() != null) {
-                for (int copIndex = 0; copIndex < level.getCops().size(); copIndex++) {
-                    Cop cop = level.getCops().get(copIndex);
-                    if (cop.getStartNode() == i) {
-                        node.setCop(true);
-                        break;
-                    }
-                }
-            }
-            if (level.getRobbers() != null) {
-                for (int robberIndex = 0; robberIndex < level.getRobbers().size(); robberIndex++) {
-                    Robber robber = level.getRobbers().get(robberIndex);
-                    if (robber.getStartNode() == i) {
-                        node.setRobber(true);
-                        break;
-                    }
-                }
-            }
             nodes.add(node);
         }
         for (int i = 0; i < nodes.size(); i++) {
@@ -64,6 +47,16 @@ public class Graph {
             for (Integer n2 : level.getEdges().get(n1)) {
                 addEdge(n1, n2);
             }
+        }
+        cops = new ArrayList<>();
+        for (Level.Cop levelCop : level.getCops()) {
+            Cop cop = new Cop(levelCop, this);
+            cops.add(cop);
+        }
+        robbers = new ArrayList<>();
+        for (Level.Robber levelRobber : level.getRobbers()) {
+            Robber robber = new Robber(levelRobber, this);
+            robbers.add(robber);
         }
     }
 
@@ -129,6 +122,14 @@ public class Graph {
         return adjacencies.get(n);
     }
 
+    public Collection<Node> getNeighbours(Node node) {
+        ArrayList<Node> neighbours = new ArrayList<>();
+        for (Integer index : getNeighbours(node.getIndex())) {
+            neighbours.add(getNode(index));
+        }
+        return neighbours;
+    }
+
     public boolean areNeighbours(int n1, int n2) {
         return adjacencies.get(n1).contains(n2);
     }
@@ -164,15 +165,6 @@ public class Graph {
         }
     }
 
-    public Node getFocusedNode() {
-        for (Node node : nodes) {
-            if (node.isFocused()) {
-                return node;
-            }
-        }
-        return null;
-    }
-
     public void addOnGraphChangeListener(OnGraphChangeListener listener) {
         this.onGraphChangeListeners.add(listener);
     }
@@ -181,11 +173,23 @@ public class Graph {
         this.onGraphChangeListeners.remove(listener);
     }
 
+    public Node getNode(int index) {
+        return nodes.get(index);
+    }
+
+    public List<Cop> getCops() {
+        return cops;
+    }
+
+    public List<Robber> getRobbers() {
+        return robbers;
+    }
+
     public interface OnGraphChangeListener {
         void onGraphChange();
     }
 
-    public List<Node> path(Node from, Node to) {
+    public List<Node> getShortestPath(Node from, Node to) {
         if (from.getIndex() == to.getIndex()) {
             return new ArrayList<>();
         }
@@ -203,6 +207,7 @@ public class Graph {
             for (Integer neighbour : getNeighbours(n)) {
                 if (!visited[neighbour]) {
                     queue.add(neighbour);
+                    previous[neighbour] = n;
                 }
             }
         }
@@ -218,13 +223,14 @@ public class Graph {
 
     public ClosestNodeResponse getClosestCop(Node node) {
         ClosestNodeResponse response = new ClosestNodeResponse();
-        for (Node n : nodes) {
-            if (n.isCop()) {
-                int distance = path(node, n).size();
-                if (distance < response.distance) {
-                    response.distance = distance;
-                    response.node = n;
-                }
+        for (Cop cop : cops) {
+            List<Node> path = getShortestPath(node, cop.getCurrentNode());
+            int distance = path.size();
+            if (distance < response.distance) {
+                response.distance = distance;
+                response.path = path;
+                response.from = node;
+                response.to = cop.getCurrentNode();
             }
         }
 

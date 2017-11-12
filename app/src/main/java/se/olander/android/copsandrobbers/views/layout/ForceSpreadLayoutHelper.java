@@ -1,11 +1,8 @@
 package se.olander.android.copsandrobbers.views.layout;
 
 import android.graphics.PointF;
-import android.support.v4.math.MathUtils;
-import android.util.Log;
 import android.view.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -17,11 +14,11 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
     private static final float ATTRACTION_CONSTANT = 1.5f;
     private static final float REPULSION_CONSTANT = 10000000f;
-    private static final int ITERATIONS = 1000;
+    public static final int MAX_ITERATIONS = 1000;
     private static final float PROXIMITY_MIN_VALUE = 1.0f;
     private static final float DEFAULT_SPRING_LENGTH = 200f;
     private static final float DAMPING = 0.3f;
-    private static final float MINIMUM_MOVEMENT_THRESHOLD = 1f;
+    public static final float MINIMUM_MOVEMENT_THRESHOLD = 0.1f;
     private static final float PADDING = 50f;
 
     private PointF tempPoint;
@@ -190,16 +187,9 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
         iteration = 0;
     }
 
-    public boolean step(int left, int top, int right, int bottom) {
+    public float step(int left, int top, int right, int bottom) {
         float totalMovement = iterate(left, top, right, bottom);
         iteration += 1;
-
-        if (totalMovement < MINIMUM_MOVEMENT_THRESHOLD) {
-            while (iteration <= ITERATIONS) {
-                iterate(left, top, right, bottom);
-                iteration += 1;
-            }
-        }
 
         for (int i = 0; i < getNodes().size(); i++) {
             View node = getNodes().get(i);
@@ -207,14 +197,18 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
             centerLayout(node, p);
         }
 
-        return iteration > ITERATIONS || totalMovement < MINIMUM_MOVEMENT_THRESHOLD;
+        if (iteration > MAX_ITERATIONS) {
+            totalMovement = 0;
+        }
+
+        return totalMovement;
     }
 
     @Override
     public void layout(int left, int top, int right, int bottom) {
         reset(left, top, right, bottom);
         float totalMovement = iterate(left, top, right, bottom);
-        for (int i = 0; i < ITERATIONS && totalMovement > MINIMUM_MOVEMENT_THRESHOLD; ++i) {
+        for (int i = 0; i < MAX_ITERATIONS && totalMovement > MINIMUM_MOVEMENT_THRESHOLD; ++i) {
             totalMovement = iterate(left, top, right, bottom);
         }
 

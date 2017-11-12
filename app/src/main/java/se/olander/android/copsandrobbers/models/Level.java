@@ -50,4 +50,28 @@ public class Level implements Serializable {
     public void setCops(List<Cop> cops) {
         this.cops = cops;
     }
+
+    public static class Cop {
+        private int startNode;
+
+        public int getStartNode() {
+            return startNode;
+        }
+
+        public void setStartNode(int startNode) {
+            this.startNode = startNode;
+        }
+    }
+
+    public static class Robber {
+        private int startNode;
+
+        public int getStartNode() {
+            return startNode;
+        }
+
+        public void setStartNode(int startNode) {
+            this.startNode = startNode;
+        }
+    }
 }
