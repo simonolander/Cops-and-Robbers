@@ -2,11 +2,15 @@ package se.olander.android.copsandrobbers.models;
 
 import android.graphics.Color;
 
+import java.util.Map;
+
 import se.olander.android.copsandrobbers.views.GraphView;
 
 public class GameEngine implements GraphView.OnNodeClickListener {
     
     private static final String TAG = GameEngine.class.getSimpleName();
+
+    private final RobberAI robberAI;
 
     private GameState gameState;
     private Graph graph;
@@ -17,6 +21,8 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     public GameEngine(Level level) {
         graph = new Graph(level);
         gameState = GameState.MOVE_COPS;
+        robberAI = new RobberAI(graph);
+        robberAI.initialize();
 
         for (Cop cop : graph.getCops()) {
             cop.getCurrentNode().setHighlight(Color.GRAY);
@@ -61,8 +67,9 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     }
 
     private void moveRobbers() {
-        for (Robber robber : graph.getRobbers()) {
-            robber.move();
+        Map<Robber, Node> moves = robberAI.calculateMoves();
+        for (Map.Entry<Robber, Node> move : moves.entrySet()) {
+            move.getKey().move(move.getValue());
         }
     }
 

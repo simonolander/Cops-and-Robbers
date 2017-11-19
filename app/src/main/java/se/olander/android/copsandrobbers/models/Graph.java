@@ -185,6 +185,10 @@ public class Graph {
         return robbers;
     }
 
+    public Robber getRobber(int index) {
+        return robbers.get(index);
+    }
+
     public interface OnGraphChangeListener {
         void onGraphChange();
     }

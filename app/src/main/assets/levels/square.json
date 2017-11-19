@@ -1,0 +1,21 @@
+{
+  "title": "Square",
+  "numberOfNodes": 4,
+  "edges": [
+    [1, 2],
+    [0, 3],
+    [0, 3],
+    [1, 2]
+  ],
+  "robbers": [
+    {
+      "startNode": 3
+    }
+  ],
+  "cops": [
+    {
+      "startNode": 0
+    }
+  ]
+
+}

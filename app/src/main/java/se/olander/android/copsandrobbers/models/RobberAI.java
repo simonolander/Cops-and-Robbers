@@ -2,20 +2,114 @@ package se.olander.android.copsandrobbers.models;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class RobberAI {
-    private static final int SEARCH_DEPTH = 10;
-    private static final int[] PRIMES = new int[] {
-            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71
-    };
-
     private final Graph graph;
+
+    private GameState initialState;
+    private Map<GameState, Collection<GameState>> gameTree;
+    private Map<GameState, Collection<GameState>> reverseGameTree;
+    private Map<GameState, Integer> values;
+    private Collection<GameState> robberWinStates;
 
     public RobberAI(Graph graph) {
         this.graph = graph;
     }
 
-    public GameState calculateInitialGameState() {
+    public void initialize() {
+        initialState = computeCurrentGameState(true);
+        computeGameTree(initialState);
+        computeRobberWinStates();
+        computeValues();
+    }
+
+    private void computeRobberWinStates() {
+        Set<GameState> states = gameTree.keySet();
+
+        robberWinStates = new HashSet<>();
+        for (GameState state : states) {
+            if (isRobberWinState(state, new HashSet<GameState>())) {
+                robberWinStates.add(state);
+            }
+        }
+    }
+
+    private boolean isRobberWinState(GameState state, Set<GameState> visited) {
+        visited.add(state);
+        if (state.allRobbersAreDead()) {
+            return false;
+        }
+        Collection<GameState> nextStates = gameTree.get(state);
+        if (state.copMove) {
+            for (GameState nextState : nextStates) {
+                if (visited.contains(nextState)) {
+                    continue;
+                }
+
+                if (!isRobberWinState(nextState, visited)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            for (GameState nextState : nextStates) {
+                if (visited.contains(nextState)) {
+                    continue;
+                }
+
+                if (isRobberWinState(nextState, visited)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private void computeValues() {
+        values = new HashMap<>();
+        Queue<GameState> queue = new LinkedList<>();
+        for (GameState state : gameTree.keySet()) {
+            if (!state.copMove && state.allRobbersAreDead()) {
+                values.put(state, 0);
+                queue.add(state);
+            }
+        }
+
+        int n = 0;
+        while (!queue.isEmpty() && n < 100000) {
+            GameState state = queue.poll();
+            int value = values.get(state);
+            Collection<GameState> parentStates = reverseGameTree.get(state);
+            if (state.copMove) {
+                for (GameState parentState : parentStates) {
+                    int parentValue = values.containsKey(parentState)
+                            ? values.get(parentState)
+                            : 0;
+                    values.put(parentState, Math.max(parentValue, value + 1));
+                }
+            }
+            else {
+                for (GameState parentState : parentStates) {
+                    int parentValue = values.containsKey(parentState)
+                            ? values.get(parentState)
+                            : Integer.MAX_VALUE;
+                    values.put(parentState, Math.min(parentValue, value + 1));
+                }
+            }
+            queue.addAll(parentStates);
+            n += 1;
+        }
+    }
+
+    private GameState computeCurrentGameState(boolean copMove) {
         int[] cops = new int[graph.getCops().size()];
         for (int i = 0; i < graph.getCops().size(); i++) {
             cops[i] = graph.getCops().get(i).getCurrentNode().getIndex();
@@ -26,39 +120,56 @@ public class RobberAI {
         }
         boolean[] dead = new boolean[graph.getRobbers().size()];
         for (int i = 0; i < robbers.length; i++) {
-            for (int i1 = 0; i1 < cops.length; i1++) {
-                if (robbers[i] == cops[i]) {
+            if (graph.getRobber(i).isDead()) {
+                dead[i] = true;
+                continue;
+            }
+            for (int cop : cops) {
+                if (robbers[i] == cop) {
                     dead[i] = true;
                     break;
                 }
             }
         }
-        boolean lost = true;
-        for (boolean b : dead) {
-            if (!b) {
-                lost = false;
-                break;
-            }
-        }
-        GameState gameState = new GameState(
+
+        return new GameState(
                 cops,
                 robbers,
                 dead,
-                lost,
-                true
+                copMove
         );
-
-        return gameState;
     }
 
-    public void calculateGameTree() {
-        GameState initialGameState = calculateInitialGameState();
-
-        
+    private void computeGameTree(GameState initialState) {
+        gameTree = new HashMap<>();
+        reverseGameTree = new HashMap<>();
+        Queue<GameState> queue = new LinkedList<>();
+        queue.add(initialState);
+        while (!queue.isEmpty()) {
+            GameState state = queue.poll();
+            if (!gameTree.containsKey(state)) {
+                Collection<GameState> nextStates = state.copMove
+                    ? copActions(state)
+                    : robberActions(state);
+                gameTree.put(state, nextStates);
+                for (GameState nextState : nextStates) {
+                    Collection<GameState> parentStates;
+                    if (!reverseGameTree.containsKey(nextState)) {
+                        parentStates = new HashSet<>();
+                        reverseGameTree.put(nextState, parentStates);
+                    }
+                    else {
+                        parentStates = reverseGameTree.get(nextState);
+                    }
+                    parentStates.add(state);
+                }
+                queue.addAll(nextStates);
+            }
+        }
     }
 
-    public ArrayList<GameState> copActions(GameState currentGameState) {
-        ArrayList<GameState> nextStates = new ArrayList<>();
+    private Collection<GameState> copActions(GameState currentGameState) {
+        HashSet<GameState> nextStates = new HashSet<>();
         ArrayList<int[]> nextCopPositions = calculateNextPositions(currentGameState.cops, null);
         for (int[] nextCopPosition : nextCopPositions) {
             nextStates.add(currentGameState.moveCops(nextCopPosition));
@@ -66,8 +177,8 @@ public class RobberAI {
         return nextStates;
     }
 
-    public ArrayList<GameState> robberActions(GameState currentGameState) {
-        ArrayList<GameState> nextStates = new ArrayList<>();
+    private Collection<GameState> robberActions(GameState currentGameState) {
+        HashSet<GameState> nextStates = new HashSet<>();
         ArrayList<int[]> nextPositions = calculateNextPositions(currentGameState.robbers, currentGameState.dead);
         for (int[] nextPosition : nextPositions) {
             nextStates.add(currentGameState.moveRobbers(nextPosition));
@@ -75,7 +186,7 @@ public class RobberAI {
         return nextStates;
     }
 
-    public ArrayList<int[]> calculateNextPositions(int[] currentPosition, boolean[] dead) {
+    private ArrayList<int[]> calculateNextPositions(int[] currentPosition, boolean[] dead) {
         ArrayList<ArrayList<Integer>> moves = new ArrayList<>();
         for (int i = 0; i < currentPosition.length; i++) {
             ArrayList<Integer> move = new ArrayList<>();
@@ -117,48 +228,59 @@ public class RobberAI {
         return false;
     }
 
-    private long toHash(int[] positions) {
-        long ans = 1;
-        for (int i = 0; i < positions.length; i++) {
-            for (int k = 0; k < positions[i]; k++) {
-                ans *= PRIMES[i];
+    public Map<Robber, Node> calculateMoves() {
+        GameState state = computeCurrentGameState(false);
+        Collection<GameState> nextStates = gameTree.get(state);
+        GameState bestState = state;
+        int bestValue = Integer.MIN_VALUE;
+        for (GameState nextState : nextStates) {
+            int value = values.get(nextState);
+            if (value > bestValue) {
+                bestState = nextState;
+                bestValue = value;
             }
         }
-        return ans;
-    }
 
-    private static int hashcode(int[] cops, int[] robbers) {
-        return Arrays.hashCode(cops) * 31 + Arrays.hashCode(robbers);
-    }
+        Map<Robber, Node> moves = new HashMap<>();
+        for (int r = 0; r < graph.getRobbers().size(); r++) {
+            Robber robber = graph.getRobbers().get(r);
+            moves.put(robber, graph.getNode(bestState.robbers[r]));
+        }
 
-    private static class GameTree {
-
+        return moves;
     }
 
     private static class GameState {
         final int[] cops;
         final int[] robbers;
         final boolean[] dead;
-        final boolean lost;
         final boolean copMove;
 
-        public GameState(int[] cops, int[] robbers, boolean[] dead, boolean lost, boolean copMove) {
+        GameState(int[] cops, int[] robbers, boolean[] dead, boolean copMove) {
             this.cops = cops;
             this.robbers = robbers;
             this.dead = dead;
-            this.lost = lost;
             this.copMove = copMove;
         }
 
-        public GameState moveCops(int[] cops) {
+        boolean allRobbersAreDead() {
+            for (boolean d : dead) {
+                if (!d) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        GameState moveCops(int[] cops) {
             return move(cops, robbers, false);
         }
 
-        public GameState moveRobbers(int[] robbers) {
+        GameState moveRobbers(int[] robbers) {
             return move(cops, robbers, true);
         }
 
-        public GameState move(int[] cops, int[] robbers, boolean copMove) {
+        GameState move(int[] cops, int[] robbers, boolean copMove) {
             boolean[] dead = Arrays.copyOf(this.dead, this.dead.length);
             for (int c = 0; c < cops.length; c++) {
                 for (int r = 0; r < robbers.length; r++) {
@@ -178,7 +300,6 @@ public class RobberAI {
                     cops,
                     robbers,
                     dead,
-                    lost,
                     copMove
             );
         }
@@ -190,7 +311,6 @@ public class RobberAI {
 
             GameState gameState = (GameState) o;
 
-            if (lost != gameState.lost) return false;
             if (copMove != gameState.copMove) return false;
             if (!Arrays.equals(cops, gameState.cops)) return false;
             if (!Arrays.equals(robbers, gameState.robbers)) return false;
@@ -202,9 +322,17 @@ public class RobberAI {
             int result = Arrays.hashCode(cops);
             result = 31 * result + Arrays.hashCode(robbers);
             result = 31 * result + Arrays.hashCode(dead);
-            result = 31 * result + (lost ? 1 : 0);
             result = 31 * result + (copMove ? 1 : 0);
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "cops=" + Arrays.toString(cops) +
+                    ", robbers=" + Arrays.toString(robbers) +
+                    ", copMove=" + copMove +
+                    '}';
         }
     }
 }

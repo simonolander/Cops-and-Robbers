@@ -12,6 +12,7 @@ public class Robber {
 
     private Node currentNode;
     private Node nextNode;
+    private boolean dead;
 
     public Robber(Level.Robber robber, Graph graph) {
         this.currentNode = graph.getNode(robber.getStartNode());
@@ -49,5 +50,13 @@ public class Robber {
         currentNode.removeRobber(this);
         node.addRobber(this);
         currentNode = node;
+    }
+
+    public boolean isDead() {
+        return dead;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
     }
 }
