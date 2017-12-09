@@ -29,6 +29,7 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
     private final Paint fillPaintCop;
     private final Paint focusPaint;
     private final Paint strokePaint;
+    private final Paint textPaint;
 
     private Node node;
 
@@ -73,6 +74,11 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
         strokePaint.setStyle(Paint.Style.STROKE);
         strokePaint.setColor(Color.BLACK);
         strokePaint.setStrokeWidth(STROKE_WIDTH);
+
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(40);
+        textPaint.setColor(Color.BLACK);
 
         setRadius(RADIUS);
         setStrokeWidth(STROKE_WIDTH);
@@ -125,6 +131,7 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
 
         canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
+        canvas.drawText("" + node.getIndex(), cx, cy, textPaint);
 
         if (node.getHighlight() != null) {
             focusPaint.setColor(node.getHighlight());
