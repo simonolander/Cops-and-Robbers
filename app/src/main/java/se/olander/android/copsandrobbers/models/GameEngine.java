@@ -63,7 +63,17 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     }
 
     private void endOfTurn() {
+        killRobbers();
         moveRobbers();
+    }
+
+    private void killRobbers() {
+        for (Cop cop : graph.getCops()) {
+            Node node = cop.getCurrentNode();
+            for (Robber robber : node.getRobbers()) {
+                robber.setDead(true);
+            }
+        }
     }
 
     private void moveRobbers() {
