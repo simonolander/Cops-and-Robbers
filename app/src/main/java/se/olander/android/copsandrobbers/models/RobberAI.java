@@ -241,9 +241,7 @@ public class RobberAI {
         while (!queue.isEmpty()) {
             GameState state = queue.poll();
             if (!gameGraph.containsKey(state)) {
-                Collection<GameState> nextStates = state.copMove
-                    ? copActions(state)
-                    : robberActions(state);
+                Collection<GameState> nextStates = computeNextStates(state);
                 gameGraph.put(state, nextStates);
                 for (GameState nextState : nextStates) {
                     Collection<GameState> parentStates;
@@ -261,45 +259,24 @@ public class RobberAI {
         }
     }
 
-//    private void computeGameTree(GameState initialState) {
-//        gameTree = new HashMap<>();
-//        reverseGameGraph = new HashMap<>();
-//        Queue<GameState> queue = new LinkedList<>();
-//        queue.add(initialState);
-//        while (!queue.isEmpty()) {
-//            GameState state = queue.poll();
-//            Collection<GameState> nextStates = gameGraph.get(state);
-//            HashSet<GameState> prunedNextStates = new HashSet<>();
-//            for (GameState nextState : nextStates) {
-//                if (gameTree.containsKey(nextState) || state.equals(nextState)) {
-//                    continue;
-//                }
-//                prunedNextStates.add(nextState);
-//                queue.add(nextState);
-//            }
-//            gameTree.put(state, prunedNextStates);
-//        }
-//    }
-
-    private Collection<GameState> copActions(GameState currentGameState) {
+    private Collection<GameState> computeNextStates(GameState state) {
         HashSet<GameState> nextStates = new HashSet<>();
-        ArrayList<int[]> nextCopPositions = calculateNextPositions(currentGameState.cops, null);
-        for (int[] nextCopPosition : nextCopPositions) {
-            nextStates.add(currentGameState.moveCops(nextCopPosition));
+        if (state.copMove) {
+            ArrayList<int[]> nextCopPositions = computeNextPositions(state.cops, null);
+            for (int[] nextCopPosition : nextCopPositions) {
+                nextStates.add(state.moveCops(nextCopPosition));
+            }
+        }
+        else {
+            ArrayList<int[]> nextPositions = computeNextPositions(state.robbers, state.dead);
+            for (int[] nextPosition : nextPositions) {
+                nextStates.add(state.moveRobbers(nextPosition));
+            }
         }
         return nextStates;
     }
 
-    private Collection<GameState> robberActions(GameState currentGameState) {
-        HashSet<GameState> nextStates = new HashSet<>();
-        ArrayList<int[]> nextPositions = calculateNextPositions(currentGameState.robbers, currentGameState.dead);
-        for (int[] nextPosition : nextPositions) {
-            nextStates.add(currentGameState.moveRobbers(nextPosition));
-        }
-        return nextStates;
-    }
-
-    private ArrayList<int[]> calculateNextPositions(int[] currentPosition, boolean[] dead) {
+    private ArrayList<int[]> computeNextPositions(int[] currentPosition, boolean[] dead) {
         ArrayList<ArrayList<Integer>> moves = new ArrayList<>();
         for (int i = 0; i < currentPosition.length; i++) {
             ArrayList<Integer> move = new ArrayList<>();
