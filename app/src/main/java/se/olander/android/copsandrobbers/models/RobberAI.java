@@ -1,7 +1,9 @@
 package se.olander.android.copsandrobbers.models;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class RobberAI {
     private static final String TAG = RobberAI.class.getSimpleName();
@@ -22,7 +26,6 @@ public class RobberAI {
 
     private GameState initialState;
     private Map<GameState, Collection<GameState>> gameGraph;
-    private Map<GameState, Collection<GameState>> reverseGameGraph;
     private Map<GameState, Double> values;
     private Collection<GameState> robberWinStates;
 
@@ -31,10 +34,41 @@ public class RobberAI {
     }
 
     public void initialize() {
+        generateAllStates();
         initialState = computeCurrentGameState(true);
-        computeGameGraph(initialState);
-        computeRobberWinStates();
-        computeValues();
+//        computeGameGraph(initialState);
+//        computeRobberWinStates();
+//        computeValues();
+    }
+
+    private BigInteger factorial(int n) {
+        BigInteger ans = BigInteger.ONE;
+        for (int i = 1; i <= n; i++) {
+            ans = ans.multiply(BigInteger.valueOf(i));
+        }
+        return ans;
+    }
+
+    private void generateAllStates() {
+        int numCops = graph.getCops().size();
+        int numRobbers = graph.getRobbers().size();
+        int numNodes = graph.getNumberOfNodes();
+        BigInteger numberOfStates = BigInteger.valueOf(2)
+                .multiply(factorial(numCops + numNodes - 1))
+                .divide(factorial(numCops))
+                .divide(factorial(numNodes - 1))
+                .multiply(factorial(numRobbers + numNodes - 1))
+                .divide(factorial(numRobbers))
+                .divide(factorial(numNodes - 1));
+        BigInteger naiveNumberOfStates = BigInteger.valueOf(2)
+                .multiply(BigInteger.valueOf(numNodes).pow(numCops))
+                .multiply(BigInteger.valueOf(numNodes).pow(numRobbers))
+                .multiply(BigInteger.valueOf(2).pow(numRobbers));
+        Log.d(TAG, "generateAllStates numCops: " + numCops);
+        Log.d(TAG, "generateAllStates numRobbers: " + numRobbers);
+        Log.d(TAG, "generateAllStates numNodes: " + numNodes);
+        Log.d(TAG, "generateAllStates numberOfStates: " + numberOfStates);
+        Log.d(TAG, "generateAllStates naiveNumberOfStates: " + naiveNumberOfStates);
     }
 
     private void computeRobberWinStates() {
@@ -88,9 +122,9 @@ public class RobberAI {
                 robberWinStates.add(state);
             }
         }
-        for (GameState robberWinState : robberWinStates) {
-            Log.d(TAG, "computeRobberWinStates: " + robberWinState);
-        }
+//        for (GameState robberWinState : robberWinStates) {
+//            Log.d(TAG, "computeRobberWinStates: " + robberWinState);
+//        }
     }
 
     private void computeValues() {
@@ -234,33 +268,29 @@ public class RobberAI {
     }
 
     private void computeGameGraph(GameState initialState) {
-        gameGraph = new HashMap<>();
-        reverseGameGraph = new HashMap<>();
+        gameGraph = new TreeMap<>();
+        TreeSet<GameState> visited = new TreeSet<>();
         Queue<GameState> queue = new LinkedList<>();
         queue.add(initialState);
+        visited.add(initialState);
         while (!queue.isEmpty()) {
             GameState state = queue.poll();
-            if (!gameGraph.containsKey(state)) {
-                Collection<GameState> nextStates = computeNextStates(state);
-                gameGraph.put(state, nextStates);
-                for (GameState nextState : nextStates) {
-                    Collection<GameState> parentStates;
-                    if (!reverseGameGraph.containsKey(nextState)) {
-                        parentStates = new HashSet<>();
-                        reverseGameGraph.put(nextState, parentStates);
-                    }
-                    else {
-                        parentStates = reverseGameGraph.get(nextState);
-                    }
-                    parentStates.add(state);
+            List<GameState> nextStates = computeNextStates(state);
+            gameGraph.put(state, nextStates);
+            if (gameGraph.size() % 1000 == 0){
+                Log.d(TAG, "computeGameGraph number of states: " + gameGraph.size());
+                Log.d(TAG, "computeGameGraph objects in queue: " + queue.size());
+            }
+            for (GameState nextState : nextStates) {
+                if (visited.add(nextState)) {
+                    queue.add(nextState);
                 }
-                queue.addAll(nextStates);
             }
         }
     }
 
-    private Collection<GameState> computeNextStates(GameState state) {
-        HashSet<GameState> nextStates = new HashSet<>();
+    private List<GameState> computeNextStates(GameState state) {
+        ArrayList<GameState> nextStates = new ArrayList<>();
         if (state.copMove) {
             ArrayList<int[]> nextCopPositions = computeNextPositions(state.cops, null);
             for (int[] nextCopPosition : nextCopPositions) {
@@ -273,6 +303,7 @@ public class RobberAI {
                 nextStates.add(state.moveRobbers(nextPosition));
             }
         }
+        nextStates.trimToSize();
         return nextStates;
     }
 
@@ -344,7 +375,7 @@ public class RobberAI {
         return moves;
     }
 
-    private static class GameState {
+    private static class GameState implements Comparable<GameState> {
         final int[] cops;
         final int[] robbers;
         final boolean[] dead;
@@ -428,5 +459,44 @@ public class RobberAI {
                     ", copMove=" + copMove +
                     '}';
         }
+
+        @Override
+        public int compareTo(@NonNull GameState o) {
+            if (copMove != o.copMove) {
+                return Boolean.compare(copMove, o.copMove);
+            }
+
+            if (cops.length != o.cops.length) {
+                return Integer.compare(cops.length, o.cops.length);
+            }
+
+            if (robbers.length != o.robbers.length) {
+                return Integer.compare(robbers.length, o.robbers.length);
+            }
+
+            if (dead.length != o.dead.length) {
+                return Integer.compare(dead.length, o.dead.length);
+            }
+
+            for (int i = 0; i < cops.length; ++i) {
+                if (cops[i] != o.cops[i]) {
+                    return Integer.compare(cops[i], o.cops[i]);
+                }
+            }
+            for (int i = 0; i < robbers.length; ++i) {
+                if (robbers[i] != o.robbers[i]) {
+                    return Integer.compare(robbers[i], o.robbers[i]);
+                }
+            }
+            for (int i = 0; i < dead.length; ++i) {
+                if (dead[i] != o.dead[i]) {
+                    return Boolean.compare(dead[i], o.dead[i]);
+                }
+            }
+
+            return 0;
+        }
+
+
     }
 }
