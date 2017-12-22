@@ -10,7 +10,7 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     
     private static final String TAG = GameEngine.class.getSimpleName();
 
-    private final RobberAI robberAI;
+    private final MiniMaxRobberAI robberAI;
 
     private GameState gameState;
     private Graph graph;
@@ -21,8 +21,8 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     public GameEngine(Level level) {
         graph = new Graph(level);
         gameState = GameState.MOVE_COPS;
-        robberAI = new RobberAI(graph);
-        robberAI.initialize();
+        robberAI = new MiniMaxRobberAI(graph);
+//        robberAI.initialize();
 
         for (Cop cop : graph.getCops()) {
             cop.getCurrentNode().setHighlight(Color.GRAY);

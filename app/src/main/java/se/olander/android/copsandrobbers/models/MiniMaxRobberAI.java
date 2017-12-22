@@ -4,24 +4,68 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 
 public class MiniMaxRobberAI {
     private static final String TAG = MiniMaxRobberAI.class.getSimpleName();
     private static final double ROBBER_WIN_VALUE = 100000;
     private static final double COP_WIN_VALUE = -100000;
+    private static final int MAX_DEPTH = 8;
 
     private final Graph graph;
+    private final Map<Node, Integer> pitFallRatings;
 
     public MiniMaxRobberAI(Graph graph) {
         this.graph = graph;
+
+        this.pitFallRatings = new HashMap<>();
+        for (int rating = 0;; ++rating) {
+            List<Node> newPitFalls = new ArrayList<>();
+            for (Node node : graph.getNodes()) {
+                if (pitFallRatings.get(node) != null) {
+                    continue;
+                }
+
+                List<Node> neighbours = graph.getNeighbours(node);
+                boolean pitFall = false;
+                for (Node n1 : neighbours) {
+                    if (pitFallRatings.get(n1) != null) {
+                        continue;
+                    }
+                    boolean dominating = true;
+                    for (Node n2 : neighbours) {
+                        if (n1.equals(n2) || pitFallRatings.get(n2) != null) {
+                            continue;
+                        }
+                        if (!graph.areNeighbours(n1, n2)) {
+                            dominating = false;
+                            break;
+                        }
+                    }
+                    if (dominating) {
+                        pitFall = true;
+                        break;
+                    }
+                }
+                if (pitFall) {
+                    newPitFalls.add(node);
+                }
+            }
+            if (newPitFalls.isEmpty()) {
+                break;
+            }
+            else {
+                for (Node pitFall : newPitFalls) {
+                    pitFallRatings.put(pitFall, rating);
+                }
+            }
+        }
+
+        Log.d(TAG, "MiniMaxRobberAI pit fall: " + pitFallRatings);
     }
 
     private GameState computeCurrentGameState(boolean copMove) {
@@ -115,31 +159,35 @@ public class MiniMaxRobberAI {
     }
 
     private double minimax(GameState state, int depth, Map<GameState, Double> memo) {
-        if (memo.containsKey(state)) {
-            return memo.get(state);
-        }
-
         if (state.allRobbersAreDead()) {
             return COP_WIN_VALUE;
         }
 
-        if (depth == 0) {
+        if (depth == MAX_DEPTH) {
             return 0;
         }
 
         Set<GameState> nextStates = computeNextStates(state);
         double best;
         if (state.copMove) {
-            double sum = 0;
+//            double sum = 0;
+//            for (GameState nextState : nextStates) {
+//                sum += minimax(nextState, depth + 1, memo);
+//            }
+//            best = sum / nextStates.size();
+            best = ROBBER_WIN_VALUE;
             for (GameState nextState : nextStates) {
-                sum += minimax(nextState, depth - 1, memo);
+                if (memo.containsKey(nextState)) {
+                    continue;
+                }
+
+                best = Math.min(best, minimax(nextState, depth + 1, memo));
             }
-            best = sum / nextStates.size();
         }
         else {
             best = COP_WIN_VALUE;
             for (GameState nextState : nextStates) {
-                best = Math.max(best, minimax(nextState, depth - 1, memo));
+                best = Math.max(best, minimax(nextState, depth + 1, memo));
             }
         }
 
@@ -148,30 +196,40 @@ public class MiniMaxRobberAI {
     }
 
     public Map<Robber, Node> calculateMoves() {
-        Log.d(TAG, "calculateMoves: begin");
-        GameState state = computeCurrentGameState(false);
-        Set<GameState> nextStates = computeNextStates(state);
-        GameState bestState = null;
-        Double best = null;
-        HashMap<GameState, Double> memo = new HashMap<>();
-        for (GameState nextState : nextStates) {
-            double value = minimax(nextState, 8, memo);
-            Log.d(TAG, "calculateMoves value: " + nextState + ", " + value);
-            if (best == null || best < value) {
-                bestState = nextState;
-                best = value;
+        List<Robber> robbers = graph.getRobbers();
+        List<Cop> cops = graph.getCops();
+        Set<Node> copNeighbours = new HashSet<>();
+        for (Cop cop : cops) {
+            copNeighbours.add(cop.getCurrentNode());
+            copNeighbours.addAll(graph.getNeighbours(cop.getCurrentNode()));
+        }
+
+        Map<Robber, Node> robberNodeMap = new HashMap<>();
+        for (Robber robber : robbers) {
+            List<Node> neighbours = graph.getNeighbours(robber.getCurrentNode());
+            int bestRating = Integer.MIN_VALUE;
+            Node bestNode = robber.getCurrentNode();
+            for (Node neighbour : neighbours) {
+                if (copNeighbours.contains(neighbour)) {
+                    continue;
+                }
+                if (!pitFallRatings.containsKey(neighbour)) {
+                    bestRating = Integer.MAX_VALUE;
+                    bestNode = neighbour;
+                    break;
+                }
+                else {
+                    int rating = pitFallRatings.get(neighbour);
+                    if (rating > bestRating) {
+                        bestRating = rating;
+                        bestNode = neighbour;
+                    }
+                }
             }
+            robberNodeMap.put(robber, bestNode);
         }
 
-        HashMap<Robber, Node> moves = new HashMap<>();
-        if (bestState == null) {
-            return moves;
-        }
-
-        for (int ri = 0; ri < bestState.robbers.length; ri++) {
-            moves.put(graph.getRobber(ri), graph.getNode(bestState.robbers[ri]));
-        }
-        return moves;
+        return robberNodeMap;
     }
 
     private static class GameState {

@@ -122,7 +122,7 @@ public class Graph {
         return adjacencies.get(n);
     }
 
-    public Collection<Node> getNeighbours(Node node) {
+    public List<Node> getNeighbours(Node node) {
         ArrayList<Node> neighbours = new ArrayList<>();
         for (Integer index : getNeighbours(node.getIndex())) {
             neighbours.add(getNode(index));
