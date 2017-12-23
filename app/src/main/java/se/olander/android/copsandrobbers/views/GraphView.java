@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.DragEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
@@ -22,7 +23,7 @@ import se.olander.android.copsandrobbers.views.layout.ForceSpreadLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.RandomLayoutHelper;
 
-public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener {
+public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener, View.OnTouchListener {
     private static final String TAG = GraphView.class.getSimpleName();
 
     private Graph graph;
@@ -52,6 +53,9 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
 
         setWillNotDraw(false);
         graphLayoutHelper = new ForceSpreadLayoutHelper();
+
+
+        setOnTouchListener(this);
     }
 
     @Override
@@ -136,7 +140,7 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
             Node node = graph.getNodes().get(i);
             NodeView nodeView = new NodeView(getContext());
             nodeView.setNode(node);
-            nodeView.setOnClickListener(this);
+            nodeView.setOnTouchListener(new NodeTouchListener());
             addView(nodeView);
             nodes.add(nodeView);
         }
@@ -159,7 +163,41 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         postInvalidate();
     }
 
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        Log.d(TAG, "onTouch: " + event);
+        return true;
+    }
+
     public interface OnNodeClickListener {
         void onNodeClick(Node node);
+    }
+
+    private class NodeTouchListener implements OnTouchListener {
+        private float dx, dy;
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            return v instanceof NodeView && onTouch((NodeView) v, event);
+        }
+
+        private boolean onTouch(NodeView v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (!v.isInside(event.getX(), event.getY())) {
+                        return false;
+                    }
+                    dx = v.getX() - event.getRawX();
+                    dy = v.getY() - event.getRawY();
+                case MotionEvent.ACTION_MOVE:
+                    v.animate()
+                        .x(event.getRawX() + dx)
+                        .y(event.getRawY() + dy)
+                        .setDuration(0)
+                        .start();
+                    postInvalidate();
+            }
+            return true;
+        }
     }
 }

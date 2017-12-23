@@ -84,20 +84,35 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
         setStrokeWidth(STROKE_WIDTH);
 
         setFocusable(true);
-        setClickable(true);
+//        setClickable(true);
         setPadding(30, 30, 30, 30);
-
-        setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                focused = !focused;
-                postInvalidate();
-            }
-        });
+//
+//        setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                focused = !focused;
+//                postInvalidate();
+//            }
+//        });
     }
 
     public int getRadius() {
         return radius;
+    }
+
+    public int getCenterX() {
+        return getRadius() + strokeWidth + getPaddingLeft();
+    }
+
+    public int getCenterY() {
+        return getRadius() + strokeWidth + getPaddingTop();
+    }
+
+    public boolean isInside(float x, float y) {
+        float r = getRadius();
+        float dx = getCenterX() - x;
+        float dy = getCenterY() - y;
+        return dx*dx + dy*dy <= r*r;
     }
 
     public void setRadius(int radius) {
@@ -126,8 +141,8 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float r = getRadius();
-        float cx = r + strokeWidth + getPaddingLeft();
-        float cy = r + strokeWidth + getPaddingTop();
+        float cx = getCenterX();
+        float cy = getCenterY();
 
         canvas.drawCircle(cx, cy, r, getFillPaint());
         canvas.drawCircle(cx, cy, r, strokePaint);
