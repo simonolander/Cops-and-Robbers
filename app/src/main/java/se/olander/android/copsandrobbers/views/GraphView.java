@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -19,7 +18,6 @@ import se.olander.android.copsandrobbers.models.Edge;
 import se.olander.android.copsandrobbers.models.Graph;
 import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.ForceSpreadLayoutHelper;
-import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
 
 public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener, View.OnTouchListener {
     private static final String TAG = GraphView.class.getSimpleName();
