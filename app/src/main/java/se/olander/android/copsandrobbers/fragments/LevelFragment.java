@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import se.olander.android.copsandrobbers.R;
@@ -38,6 +39,16 @@ public class LevelFragment extends Fragment implements GameEngine.OnGameEventHan
         graphView = view.findViewById(R.id.graph);
         graphView.setGraph(gameEngine.getGraph());
         graphView.setOnNodeClickListener(gameEngine);
+
+        Button relayout = view.findViewById(R.id.relayout);
+        relayout.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                graphView.relayout();
+            }
+        });
+
 
         return view;
     }

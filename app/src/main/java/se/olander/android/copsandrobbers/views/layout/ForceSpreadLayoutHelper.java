@@ -1,8 +1,10 @@
 package se.olander.android.copsandrobbers.views.layout;
 
 import android.graphics.PointF;
+import android.util.Log;
 import android.view.View;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -24,12 +26,7 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
     private PointF tempPoint;
     private PointF[] points;
     private PointF[] velocities;
-    private Random random;
     private int iteration;
-
-    public ForceSpreadLayoutHelper() {
-        this.random = new Random();
-    }
 
     @Override
     public void setNodes(List<? extends View> nodes) {
@@ -87,7 +84,7 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
         return out;
     }
 
-    private float iterate(float left, float top, float right, float bottom) {
+    public float iterate(float left, float top, float right, float bottom) {
         float width = right - left;
         float height = bottom - top;
         float maxDistance = Math.max(width, height);
@@ -170,23 +167,6 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
         return totalMovement;
     }
 
-    public void reset(int left, int top, int right, int bottom) {
-        int paddingX = (int) ((right - left) * 0.1);
-        int paddingY = (int) ((bottom - top) * 0.1);
-        int minLeft = left + paddingX;
-        int minTop = top + paddingY;
-        int minRight = right - paddingX;
-        int minBottom = bottom - paddingY;
-        for (int i = 0; i < points.length; ++i) {
-            points[i].set(
-                    minLeft + random.nextInt(minRight - minLeft),
-                    minTop + random.nextInt(minBottom - minTop)
-            );
-            velocities[i].set(0, 0);
-        }
-        iteration = 0;
-    }
-
     public float step(int left, int top, int right, int bottom) {
         float totalMovement = iterate(left, top, right, bottom);
         iteration += 1;
@@ -206,12 +186,27 @@ public class ForceSpreadLayoutHelper extends GraphLayoutHelper {
 
     @Override
     public void layout(int left, int top, int right, int bottom) {
-        reset(left, top, right, bottom);
+        reset();
         float totalMovement = iterate(left, top, right, bottom);
         for (int i = 0; i < MAX_ITERATIONS && totalMovement > MINIMUM_MOVEMENT_THRESHOLD; ++i) {
             totalMovement = iterate(left, top, right, bottom);
         }
 
+        layoutNodesAtCurrentPoints();
+    }
+
+    public void reset() {
+        for (int i = 0; i < points.length; ++i) {
+            points[i].set(
+                getCenterX(i),
+                getCenterY(i)
+            );
+            velocities[i].set(0, 0);
+        }
+        iteration = 0;
+    }
+
+    public void layoutNodesAtCurrentPoints() {
         for (int i = 0; i < getNodes().size(); i++) {
             View node = getNodes().get(i);
             PointF p = points[i];

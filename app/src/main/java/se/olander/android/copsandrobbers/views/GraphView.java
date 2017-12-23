@@ -4,11 +4,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -18,10 +18,8 @@ import java.util.ArrayList;
 import se.olander.android.copsandrobbers.models.Edge;
 import se.olander.android.copsandrobbers.models.Graph;
 import se.olander.android.copsandrobbers.models.Node;
-import se.olander.android.copsandrobbers.views.layout.CircleLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.ForceSpreadLayoutHelper;
 import se.olander.android.copsandrobbers.views.layout.GraphLayoutHelper;
-import se.olander.android.copsandrobbers.views.layout.RandomLayoutHelper;
 
 public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener, View.OnTouchListener {
     private static final String TAG = GraphView.class.getSimpleName();
@@ -31,7 +29,7 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     private Paint edgePaint;
     private Paint loadingTextPaint;
 
-    private GraphLayoutHelper graphLayoutHelper;
+    private ForceSpreadLayoutHelper graphLayoutHelper;
 
     private OnNodeClickListener onNodeClickListener;
     private ArrayList<NodeView> nodes;
@@ -92,32 +90,9 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     @Override
     protected void onLayout(boolean changed, final int left, final int top, final int right, final int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (false && this.graphLayoutHelper instanceof ForceSpreadLayoutHelper) {
-            final ForceSpreadLayoutHelper layoutHelper = (ForceSpreadLayoutHelper) this.graphLayoutHelper;
-            layoutHelper.reset(left, top, right, bottom);
-            initialized = false;
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    float totalMovement = layoutHelper.step(left, top, right, bottom);
-                    postInvalidate();
-
-                    if (totalMovement > ForceSpreadLayoutHelper.MINIMUM_MOVEMENT_THRESHOLD) {
-                        long delayMillis = totalMovement > 10
-                                ? 10
-                                : (long) totalMovement;
-                        postDelayed(this, delayMillis);
-                    }
-                    else {
-                        initialized = true;
-                    }
-                }
-            });
-        }
-        else {
-            initialized = true;
-            graphLayoutHelper.layout(left, top, right, bottom);
-        }
+        graphLayoutHelper.randomLayout(left, top, right, bottom);
+        graphLayoutHelper.layout(left, top, right, bottom);
+        initialized = true;
     }
 
     @Override
@@ -169,12 +144,36 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         return true;
     }
 
+    public void relayout() {
+//        graphLayoutHelper.reset();
+//        Runnable animator = new Runnable() {
+//            @Override
+//            public void run() {
+//                float totalMovement = graphLayoutHelper.step(getLeft(), getTop(), getRight(), getBottom());
+//                postInvalidate();
+//
+//                if (totalMovement > ForceSpreadLayoutHelper.MINIMUM_MOVEMENT_THRESHOLD) {
+//                    long delayMillis = totalMovement > 10
+//                        ? 10
+//                        : (long) totalMovement;
+//                    postDelayed(this, 10);
+//                }
+//                else {
+//                    initialized = true;
+//                }
+//            }
+//        };
+//        initialized = false;
+//        post(animator);
+        graphLayoutHelper.layout(getLeft(), getTop(), getRight(), getBottom());
+    }
+
     public interface OnNodeClickListener {
         void onNodeClick(Node node);
     }
 
     private class NodeTouchListener implements OnTouchListener {
-        private float dx, dy;
+        private float lastX, lastY;
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -187,14 +186,17 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
                     if (!v.isInside(event.getX(), event.getY())) {
                         return false;
                     }
-                    dx = v.getX() - event.getRawX();
-                    dy = v.getY() - event.getRawY();
+                    lastX = event.getRawX();
+                    lastY = event.getRawY();
                 case MotionEvent.ACTION_MOVE:
-                    v.animate()
-                        .x(event.getRawX() + dx)
-                        .y(event.getRawY() + dy)
-                        .setDuration(0)
-                        .start();
+                    float newX = event.getRawX();
+                    float newY = event.getRawY();
+                    v.setLeft((int) (v.getLeft() + newX - lastX));
+                    v.setTop((int) (v.getTop() + newY - lastY));
+                    v.setRight(v.getLeft() + v.getMeasuredWidth() + v.getPaddingRight() + v.getPaddingLeft());
+                    v.setBottom(v.getTop() + v.getMeasuredHeight() + v.getPaddingBottom() + v.getPaddingTop());
+                    lastX = newX;
+                    lastY = newY;
                     postInvalidate();
             }
             return true;
