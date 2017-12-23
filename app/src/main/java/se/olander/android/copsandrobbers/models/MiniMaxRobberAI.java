@@ -199,8 +199,9 @@ public class MiniMaxRobberAI {
         List<Robber> robbers = graph.getRobbers();
         List<Cop> cops = graph.getCops();
         Set<Node> copNeighbours = new HashSet<>();
+        Set<Node> copNodes = new HashSet<>();
         for (Cop cop : cops) {
-            copNeighbours.add(cop.getCurrentNode());
+            copNodes.add(cop.getCurrentNode());
             copNeighbours.addAll(graph.getNeighbours(cop.getCurrentNode()));
         }
 
@@ -210,20 +211,23 @@ public class MiniMaxRobberAI {
             int bestRating = Integer.MIN_VALUE;
             Node bestNode = robber.getCurrentNode();
             for (Node neighbour : neighbours) {
-                if (copNeighbours.contains(neighbour)) {
-                    continue;
+                final int rating;
+                if (copNodes.contains(neighbour)) {
+                    rating = Integer.MIN_VALUE;
                 }
-                if (!pitFallRatings.containsKey(neighbour)) {
-                    bestRating = Integer.MAX_VALUE;
-                    bestNode = neighbour;
-                    break;
+                else if (copNeighbours.contains(neighbour)) {
+                    rating = Integer.MIN_VALUE + 1;
+                }
+                else if (pitFallRatings.containsKey(neighbour)) {
+                    rating = pitFallRatings.get(neighbour);
                 }
                 else {
-                    int rating = pitFallRatings.get(neighbour);
-                    if (rating > bestRating) {
-                        bestRating = rating;
-                        bestNode = neighbour;
-                    }
+                    rating = Integer.MAX_VALUE;
+                }
+
+                if (rating > bestRating) {
+                    bestRating = rating;
+                    bestNode = neighbour;
                 }
             }
             robberNodeMap.put(robber, bestNode);
