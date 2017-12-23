@@ -41,24 +41,45 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     public void onNodeClick(Node node) {
         if (node.hasCop()) {
             Cop cop = node.getAnyCop();
+            clearHighlights();
             cop.getCurrentNode().setHighlight(Color.BLUE);
             for (Node neighbour : graph.getNeighbours(cop.getCurrentNode())) {
-                neighbour.setHighlight(Color.GREEN);
+                if (neighbour.hasCop()) {
+                    neighbour.setHighlight(Color.GRAY);
+                }
+                else {
+                    neighbour.setHighlight(Color.GREEN);
+                }
             }
             focusedCop = cop;
         }
-        else if (focusedCop != null) {
-            if (graph.areNeighbours(focusedCop.getCurrentNode(), node)) {
-                for (Node n : graph.getNodes()) {
-                    n.setHighlight(null);
+        else if (focusedCop != null && graph.areNeighbours(focusedCop.getCurrentNode(), node)) {
+            clearHighlights();
+            focusedCop.move(node);
+            node.setHighlight(Color.BLUE);
+            for (Node neighbour : graph.getNeighbours(node)) {
+                if (neighbour.hasCop()) {
+                    neighbour.setHighlight(Color.GRAY);
                 }
-                focusedCop.move(node);
-                node.setHighlight(Color.BLUE);
-                for (Node neighbour : graph.getNeighbours(node)) {
+                else {
                     neighbour.setHighlight(Color.GREEN);
                 }
-                endOfTurn();
             }
+            endOfTurn();
+        }
+        else {
+            clearHighlights();
+            focusedCop = null;
+            node.setHighlight(Color.BLUE);
+            for (Node neighbour : graph.getNeighbours(node)) {
+                neighbour.setHighlight(Color.GRAY);
+            }
+        }
+    }
+
+    private void clearHighlights() {
+        for (Node n : graph.getNodes()) {
+            n.setHighlight(null);
         }
     }
 
