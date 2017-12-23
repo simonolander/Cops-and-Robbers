@@ -1,0 +1,23 @@
+{
+  "title": "Utility",
+  "numberOfNodes": 6,
+  "edges": [
+    [3, 4, 5],
+    [3, 4, 5],
+    [3, 4, 5],
+    [0, 1, 2],
+    [0, 1, 2],
+    [0, 1, 2]
+  ],
+  "robbers": [
+    {
+      "startNode": 0
+    }
+  ],
+  "cops": [
+    {
+      "startNode": 3
+    }
+  ]
+
+}

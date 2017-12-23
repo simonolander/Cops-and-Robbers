@@ -208,7 +208,9 @@ public class MiniMaxRobberAI {
         Map<Robber, Node> robberNodeMap = new HashMap<>();
         for (Robber robber : robbers) {
             List<Node> neighbours = graph.getNeighbours(robber.getCurrentNode());
-            int bestRating = Integer.MIN_VALUE;
+            int bestRating = copNeighbours.contains(robber.getCurrentNode())
+                ? Integer.MIN_VALUE
+                : Integer.MIN_VALUE + 2;
             Node bestNode = robber.getCurrentNode();
             for (Node neighbour : neighbours) {
                 final int rating;
