@@ -83,8 +83,6 @@ public class NodeView extends View implements Node.OnNodeChangeListener {
         setRadius(RADIUS);
         setStrokeWidth(STROKE_WIDTH);
 
-        setFocusable(true);
-//        setClickable(true);
         setPadding(30, 30, 30, 30);
 //
 //        setOnClickListener(new OnClickListener() {

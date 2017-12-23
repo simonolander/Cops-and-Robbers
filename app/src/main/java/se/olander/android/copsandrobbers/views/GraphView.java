@@ -7,7 +7,6 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -19,7 +18,7 @@ import se.olander.android.copsandrobbers.models.Graph;
 import se.olander.android.copsandrobbers.models.Node;
 import se.olander.android.copsandrobbers.views.layout.ForceSpreadLayoutHelper;
 
-public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener, View.OnTouchListener {
+public class GraphView extends RelativeLayout implements View.OnClickListener, Graph.OnGraphChangeListener {
     private static final String TAG = GraphView.class.getSimpleName();
 
     private Graph graph;
@@ -33,6 +32,8 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     private ArrayList<NodeView> nodes;
 
     private boolean initialized;
+
+    private TouchMode mode = TouchMode.MOVE;
 
     public GraphView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -49,9 +50,6 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
 
         setWillNotDraw(false);
         graphLayoutHelper = new ForceSpreadLayoutHelper();
-
-
-        setOnTouchListener(this);
     }
 
     @Override
@@ -113,7 +111,7 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
             Node node = graph.getNodes().get(i);
             NodeView nodeView = new NodeView(getContext());
             nodeView.setNode(node);
-            nodeView.setOnTouchListener(new NodeTouchListener());
+            nodeView.setOnTouchListener(new NodeOnTouchListener());
             addView(nodeView);
             nodes.add(nodeView);
         }
@@ -134,12 +132,6 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
     @Override
     public void onGraphChange() {
         postInvalidate();
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        Log.d(TAG, "onTouch: " + event);
-        return true;
     }
 
     public void relayout() {
@@ -170,15 +162,39 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
         void onNodeClick(Node node);
     }
 
-    private class NodeTouchListener implements OnTouchListener {
+    private class NodeOnTouchListener implements OnTouchListener {
         private float lastX, lastY;
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            return v instanceof NodeView && onTouch((NodeView) v, event);
+            if (!(v instanceof NodeView)) {
+                return false;
+            }
+
+            switch (mode) {
+                case REARRANGE:
+                    return rearrange((NodeView) v, event);
+                case MOVE:
+                    return moveCops((NodeView) v, event);
+            }
+
+            return false;
         }
 
-        private boolean onTouch(NodeView v, MotionEvent event) {
+        private boolean moveCops(NodeView v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    return v.isInside(event.getX(), event.getY());
+                case MotionEvent.ACTION_UP:
+                    if (onNodeClickListener != null && v.isInside(event.getX(), event.getY())) {
+                        onNodeClickListener.onNodeClick(v.getNode());
+                    }
+                    return true;
+            }
+            return true;
+        }
+
+        private boolean rearrange(NodeView v, MotionEvent event) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     if (!v.isInside(event.getX(), event.getY())) {
@@ -199,5 +215,10 @@ public class GraphView extends RelativeLayout implements View.OnClickListener, G
             }
             return true;
         }
+    }
+
+    public enum TouchMode {
+        REARRANGE,
+        MOVE
     }
 }
