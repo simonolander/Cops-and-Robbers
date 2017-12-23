@@ -1,6 +1,7 @@
 package se.olander.android.copsandrobbers.models;
 
 import android.graphics.Color;
+import android.util.Log;
 
 import java.util.Map;
 
@@ -15,6 +16,8 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     private GameState gameState;
     private Graph graph;
     private OnGameEventHandler onGameEventHandler;
+    private int numberOfTurns;
+    private long startTime;
 
     private Cop focusedCop;
 
@@ -22,7 +25,8 @@ public class GameEngine implements GraphView.OnNodeClickListener {
         graph = new Graph(level);
         gameState = GameState.MOVE_COPS;
         robberAI = new MiniMaxRobberAI(graph);
-//        robberAI.initialize();
+        numberOfTurns = 0;
+        startTime = System.currentTimeMillis();
 
         for (Cop cop : graph.getCops()) {
             cop.getCurrentNode().setHighlight(Color.GRAY);
@@ -35,36 +39,42 @@ public class GameEngine implements GraphView.OnNodeClickListener {
 
     @Override
     public void onNodeClick(Node node) {
-        if (focusedCop != null) {
-            Node focusedNode = focusedCop.getCurrentNode();
+        if (node.hasCop()) {
+            Cop cop = node.getAnyCop();
+            cop.getCurrentNode().setHighlight(Color.BLUE);
+            for (Node neighbour : graph.getNeighbours(cop.getCurrentNode())) {
+                neighbour.setHighlight(Color.GREEN);
+            }
+            focusedCop = cop;
+        }
+        else if (focusedCop != null) {
             if (graph.areNeighbours(focusedCop.getCurrentNode(), node)) {
                 for (Node n : graph.getNodes()) {
                     n.setHighlight(null);
                 }
                 focusedCop.move(node);
-                focusedNode = node;
-                focusedNode.setHighlight(Color.BLUE);
-                for (Node neighbour : graph.getNeighbours(focusedNode)) {
+                node.setHighlight(Color.BLUE);
+                for (Node neighbour : graph.getNeighbours(node)) {
                     neighbour.setHighlight(Color.GREEN);
                 }
                 endOfTurn();
             }
         }
-        else {
-            if (node.getCops().size() == 1) {
-                Cop cop = node.getAnyCop();
-                cop.getCurrentNode().setHighlight(Color.BLUE);
-                for (Node neighbour : graph.getNeighbours(cop.getCurrentNode())) {
-                    neighbour.setHighlight(Color.GREEN);
-                }
-                focusedCop = cop;
-            }
-        }
     }
 
     private void endOfTurn() {
+        numberOfTurns += 1;
         killRobbers();
-        moveRobbers();
+        if (allRobbersAreDead()) {
+            victory();
+        }
+        else {
+            moveRobbers();
+        }
+    }
+
+    private void victory() {
+        onGameEventHandler.victory();
     }
 
     private void killRobbers() {
@@ -79,18 +89,35 @@ public class GameEngine implements GraphView.OnNodeClickListener {
     private void moveRobbers() {
         Map<Robber, Node> moves = robberAI.calculateMoves();
         for (Map.Entry<Robber, Node> move : moves.entrySet()) {
-            move.getKey().move(move.getValue());
+            Robber robber = move.getKey();
+            if (robber.isDead()) {
+                continue;
+            }
+
+            Node node = move.getValue();
+            robber.move(node);
         }
     }
 
-    private void onCopMove(Node from, Node to) {
-//        if (to.isRobber()) {
-//            onGameEventHandler.victory();
-//        }
+    private boolean allRobbersAreDead() {
+        for (Robber robber : graph.getRobbers()) {
+            if (!robber.isDead()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Graph getGraph() {
         return graph;
+    }
+
+    public int getNumberOfTurns() {
+        return numberOfTurns;
+    }
+
+    public long getTotalTime() {
+        return System.currentTimeMillis() - startTime;
     }
 
     public enum GameState {

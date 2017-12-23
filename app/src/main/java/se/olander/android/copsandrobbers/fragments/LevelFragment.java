@@ -17,7 +17,7 @@ import se.olander.android.copsandrobbers.views.GraphView;
 
 public class LevelFragment extends Fragment implements GameEngine.OnGameEventHandler {
 
-    public static final String LEVEL_KEY = "level";
+    private static final String LEVEL_KEY = "LEVEL_KEY";
 
     private Level level;
     private GraphView graphView;
@@ -62,6 +62,17 @@ public class LevelFragment extends Fragment implements GameEngine.OnGameEventHan
 
     @Override
     public void victory() {
-        Toast.makeText(getContext(), "Victory!", Toast.LENGTH_SHORT).show();
+        getFragmentManager()
+            .beginTransaction()
+            .replace(R.id.fragment_container, VictoryFragment.newInstance(level, gameEngine.getNumberOfTurns(), gameEngine.getTotalTime()))
+            .commit();
+    }
+
+    public static LevelFragment newInstance(Level level) {
+        LevelFragment fragment = new LevelFragment();
+        Bundle arguments = new Bundle();
+        arguments.putSerializable(LevelFragment.LEVEL_KEY, level);
+        fragment.setArguments(arguments);
+        return fragment;
     }
 }

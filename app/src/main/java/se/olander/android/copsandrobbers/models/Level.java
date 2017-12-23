@@ -74,4 +74,19 @@ public class Level implements Serializable {
             this.startNode = startNode;
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Level level = (Level) o;
+
+        return title != null ? title.equals(level.title) : level.title == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return title != null ? title.hashCode() : 0;
+    }
 }
